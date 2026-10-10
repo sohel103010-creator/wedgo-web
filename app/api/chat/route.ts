@@ -69,6 +69,23 @@ export async function POST(req: NextRequest) {
     if (!sub) {
       return NextResponse.json({ error: "মেসেজ করতে প্রিমিয়াম প্যাকেজ কিনুন" }, { status: 403 });
     }
+    // Basic package: max 3 chat partners
+    if (sub.max_chat_partners) {
+      const partners = await query(
+        `SELECT COUNT(DISTINCT CASE WHEN sender_id = $1 THEN receiver_id ELSE sender_id END) as cnt
+         FROM messages WHERE sender_id = $1 OR receiver_id = $1`,
+        [user.id]
+      );
+      const cnt = parseInt(partners.rows[0]?.cnt || "0");
+      // Check if this receiver is already a partner
+      const existing = await query(
+        "SELECT 1 FROM messages WHERE (sender_id = $1 AND receiver_id = $2) OR (sender_id = $2 AND receiver_id = $1) LIMIT 1",
+        [user.id, receiver_id]
+      );
+      if (cnt >= sub.max_chat_partners && existing.rows.length === 0) {
+        return NextResponse.json({ error: `এই প্যাকেজে শুধুমাত্র ${sub.max_chat_partners} জনের সাথে কথা বলতে পারবেন` }, { status: 403 });
+      }
+    }
   }
 
   // For female: check the male's subscription to determine permissions

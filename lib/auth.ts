@@ -24,6 +24,8 @@ export async function ensureSchemaAndSeed(): Promise<void> {
   await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS hide_online BOOLEAN DEFAULT FALSE").catch(() => {});
   await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS theme VARCHAR(10) DEFAULT 'dark'").catch(() => {});
   await query("ALTER TABLE payments ADD COLUMN IF NOT EXISTS extra_label VARCHAR(100)").catch(() => {});
+  await query("ALTER TABLE packages ADD COLUMN IF NOT EXISTS max_chat_partners INTEGER").catch(() => {});
+  await query("UPDATE packages SET max_chat_partners = 3 WHERE price = 100 AND max_chat_partners IS NULL").catch(() => {});
   // Dedupe packages: the seed INSERT has no UNIQUE target, so every cold start added 4 more rows (2026-10-10)
   await query("UPDATE subscriptions s SET package_id = k.keep_id FROM (SELECT MIN(id) AS keep_id, name, price FROM packages GROUP BY name, price) k JOIN packages p ON p.name = k.name AND p.price = k.price WHERE s.package_id = p.id AND s.package_id <> k.keep_id").catch(() => {});
   await query("UPDATE payments pmt SET package_id = k.keep_id FROM (SELECT MIN(id) AS keep_id, name, price FROM packages GROUP BY name, price) k JOIN packages p ON p.name = k.name AND p.price = k.price WHERE pmt.package_id = p.id AND pmt.package_id <> k.keep_id").catch(() => {});
@@ -122,7 +124,7 @@ export async function getActiveSubscription(userId: number) {
   const sub = await queryOne(
     `SELECT s.*, p.name as package_name, p.price, p.audio_minutes, p.video_minutes,
             p.photo_share, p.number_share, p.link_share, p.profile_views,
-            p.unlimited_views, p.unlimited_msg, p.msg_only
+            p.unlimited_views, p.unlimited_msg, p.msg_only, p.max_chat_partners
      FROM subscriptions s JOIN packages p ON s.package_id = p.id
      WHERE s.user_id = $1 AND s.status = 'active' AND s.expires_at > NOW()
      ORDER BY s.expires_at DESC LIMIT 1`,

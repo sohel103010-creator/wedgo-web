@@ -79,6 +79,7 @@ export default function Packages() {
           <div className="price center">৳{p.price}<span className="small">/মাস</span></div>
           <ul className="feat-list">
             <li className={p.msg_days >= 30 ? "" : "no"}>আনলিমিটেড মেসেজ ({p.msg_days} দিন)</li>
+            {p.max_chat_partners && <li>শুধুমাত্র {p.max_chat_partners} জনের সাথে চ্যাট</li>}
             <li className={p.audio_minutes > 0 ? "" : "no"}>{p.audio_minutes > 0 ? `${p.audio_minutes} মিনিট অডিও কল` : "অডিও কল নেই"}</li>
             <li className={p.video_minutes > 0 ? "" : "no"}>{p.video_minutes > 0 ? `${p.video_minutes} মিনিট ভিডিও কল` : "ভিডিও কল নেই"}</li>
             <li className={p.photo_share ? "" : "no"}>ছবি শেয়ার {p.photo_share ? "" : "নেই"}</li>
