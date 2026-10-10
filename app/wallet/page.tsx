@@ -21,9 +21,8 @@ export default function Wallet() {
         if (d.wallet) setNForm({ bkash: d.wallet.bkash_number || "", nagad: d.wallet.nagad_number || "", rocket: d.wallet.rocket_number || "" });
       });
     fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } }).then((r) => r.json()).then(setMe);
-    // Get admin payment numbers
-    fetch("/api/packages").then((r) => r.json()).then((d) => {
-      const s = d.settings || {};
+    // Get admin payment numbers (lightweight endpoint)
+    fetch("/api/pay-numbers").then((r) => r.json()).then((s) => {
       setPayNumbers({ bkash: s.bkash_number, nagad: s.nagad_number, rocket: s.rocket_number });
     });
   }, []);
