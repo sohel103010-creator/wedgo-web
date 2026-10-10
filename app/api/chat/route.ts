@@ -4,10 +4,18 @@ import { getUserFromReq, getActiveSubscription, query } from "@/lib/auth";
 
 // Check for spam: numbers, links (auto-delete + suspend logic handled in POST)
 function containsBlocked(content: string, canShareNumber: boolean, canShareLink: boolean): string | null {
-  if (!canShareNumber && /\d{6,}/.test(content.replace(/[\s-]/g, ""))) {
+  // Convert Bengali/Arabic digits to English
+  const bnDigits = "০১২৩৪৫৬৭৮৯";
+  let normalized = content;
+  for (let i = 0; i < 10; i++) {
+    normalized = normalized.split(bnDigits[i]).join(String(i));
+  }
+  // Remove all separators: spaces, dashes, dots, parentheses, plus
+  const digitsOnly = normalized.replace(/[\s\-().+]/g, "");
+  if (!canShareNumber && /\d{6,}/.test(digitsOnly)) {
     return "number";
   }
-  if (!canShareLink && /(https?:\/\/|www\.|\.com|\.net|\.org)/i.test(content)) {
+  if (!canShareLink && /(https?:\/\/|www\.|\.com|\.net|\.org|\.bd|\.info|\.me|\.io|t\.me|bit\.ly|tinyurl|wa\.me|messenger\.com|facebook\.com|imo|whatsapp)/i.test(content)) {
     return "link";
   }
   return null;
