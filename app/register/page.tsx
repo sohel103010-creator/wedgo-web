@@ -33,7 +33,7 @@ export default function Register() {
     <div className="container">
       <div className="logo" style={{ fontSize: 28 }}>💒 WedGo</div>
       <h2 className="title">রেজিস্ট্রেশন</h2>
-      <p className="subtitle">ফ্রি রেজিস্ট্রেশন করুন — মেয়েদের জন্য সব ফ্রি!</p>
+      <p className="subtitle">ফ্রি রেজিস্ট্রেশন করুন</p>
 
       <div className="card">
         <input placeholder="আপনার নাম" value={form.name} onChange={(e) => set("name", e.target.value)} />

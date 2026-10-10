@@ -36,8 +36,8 @@ export default function Packages() {
     return (
       <div className="container page-pad center">
         <div className="card">
-          <h3>💝 মেয়েদের জন্য সব ফ্রি!</h3>
-          <p className="small">আপনার কোনো প্যাকেজ কেনার দরকার নেই।</p>
+          <h3>💝 স্বাগতম!</h3>
+          <p className="small">আপনার সব ফিচার চালু আছে।</p>
           <Link href="/dashboard" className="btn mt">ড্যাশবোর্ডে যান</Link>
         </div>
       </div>

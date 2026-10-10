@@ -106,7 +106,6 @@ export default function Home() {
         <div className="small" style={{ lineHeight: 2, marginTop: 8 }}>
           🎥 ভিডিও কলে কথা বলে সিদ্ধান্ত নিন<br />
           🔒 নিরাপদ ও ভেরিফায়েড প্রোফাইল<br />
-          💰 মেয়েদের জন্য সম্পূর্ণ ফ্রি + আয়ের সুযোগ<br />
           📞 HD অডিও/ভিডিও কল সিস্টেম
         </div>
       </div>

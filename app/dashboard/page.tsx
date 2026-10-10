@@ -101,7 +101,7 @@ export default function Dashboard() {
         ) : (
           <>
             <div className="alert alert-warn">
-              {isFemale ? "💝 মেয়েদের জন্য সব ফ্রি!" : "আপনার কোনো প্রিমিয়াম প্যাকেজ নেই"}
+              {isFemale ? "💝 আপনার সব ফিচার চালু আছে!" : "আপনার কোনো প্রিমিয়াম প্যাকেজ নেই"}
             </div>
             {!isFemale && <Link href="/packages" className="btn btn-gold center">প্রিমিয়াম কিনুন</Link>}
           </>
