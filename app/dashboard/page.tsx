@@ -36,6 +36,14 @@ export default function Dashboard() {
       .then((r) => r.json())
       .then((d) => { setData(d); setLoading(false); })
       .catch(() => { setLoading(false); });
+
+    // Heartbeat every 60s (lightweight, keeps online status fresh)
+    const beat = () => fetch("/api/heartbeat", {
+      method: "POST", headers: { Authorization: "Bearer " + token }
+    }).catch(() => {});
+    beat();
+    const hb = setInterval(beat, 60000);
+    return () => clearInterval(hb);
   }, []);
 
   function logout() {
