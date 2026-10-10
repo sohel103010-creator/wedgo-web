@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromReq, query, queryOne } from "@/lib/auth";
+import { getUserFromReq, getActiveSubscription, query, queryOne } from "@/lib/auth";
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   const user = await getUserFromReq(req);
@@ -10,6 +10,27 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     [params.id]
   );
   if (!p) return NextResponse.json({ error: "পাওয়া যায়নি" }, { status: 404 });
+  // Profile view limit check for male users
+  if (user && user.id != params.id && user.gender !== "female" && user.role !== "admin") {
+    const sub = await getActiveSubscription(user.id);
+    if (sub && !sub.unlimited_views && sub.profile_views) {
+      // Count distinct profiles viewed during this subscription
+      const views = await query(
+        `SELECT COUNT(DISTINCT viewed_id) as cnt FROM profile_views
+         WHERE viewer_id = $1 AND created_at > $2`,
+        [user.id, sub.created_at]
+      );
+      const cnt = parseInt(views.rows[0]?.cnt || "0");
+      // Check if already viewed this profile
+      const alreadyViewed = await query(
+        "SELECT 1 FROM profile_views WHERE viewer_id = $1 AND viewed_id = $2 AND created_at > $3 LIMIT 1",
+        [user.id, params.id, sub.created_at]
+      );
+      if (cnt >= sub.profile_views && alreadyViewed.rows.length === 0) {
+        return NextResponse.json({ error: `এই প্যাকেজে শুধুমাত্র ${sub.profile_views}টি প্রোফাইল দেখতে পারবেন` }, { status: 403 });
+      }
+    }
+  }
   // Log profile view
   if (user && user.id != params.id) {
     await query("INSERT INTO profile_views (viewer_id, viewed_id) VALUES ($1, $2)", [user.id, params.id]);

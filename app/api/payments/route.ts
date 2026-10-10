@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromReq, query, queryOne } from "@/lib/auth";
+import { getUserFromReq, getActiveSubscription, query, queryOne } from "@/lib/auth";
 
 // Simple AI check: validate trx_id format
 function aiCheckTrx(trxId: string, method: string): string {
@@ -17,6 +17,14 @@ export async function POST(req: NextRequest) {
   const { package_id, extra_label, amount, method, sender_number, trx_id } = await req.json();
   if ((!package_id && !extra_label) || !method || !sender_number || !trx_id) {
     return NextResponse.json({ error: "সব তথ্য দিন" }, { status: 400 });
+  }
+
+  // Extra minutes: only for package 3 & 4 holders (price >= 2000)
+  if (extra_label && extra_label.includes("মিনিট")) {
+    const sub = await getActiveSubscription(user.id);
+    if (!sub || (sub.price || 0) < 2000) {
+      return NextResponse.json({ error: "এক্সট্রা মিনিট শুধু গোল্ড/প্লাটিনাম প্যাকেজের জন্য" }, { status: 403 });
+    }
   }
 
   const ai_check = aiCheckTrx(trx_id, method);
