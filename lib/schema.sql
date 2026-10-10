@@ -236,3 +236,25 @@ ON CONFLICT DO NOTHING;
 INSERT INTO admins (email, mobile, is_main) VALUES
   ('sj2114273@gmail.com', '01301275001', TRUE)
 ON CONFLICT (email) DO NOTHING;
+
+CREATE TABLE IF NOT EXISTS calls (
+  id SERIAL PRIMARY KEY,
+  caller_id INT REFERENCES users(id) ON DELETE CASCADE,
+  receiver_id INT REFERENCES users(id) ON DELETE CASCADE,
+  call_type VARCHAR(10) NOT NULL,
+  status VARCHAR(20) DEFAULT 'ringing',
+  offer_sdp TEXT,
+  answer_sdp TEXT,
+  duration_sec INT DEFAULT 0,
+  created_at TIMESTAMP DEFAULT NOW(),
+  answered_at TIMESTAMP,
+  ended_at TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS ice_candidates (
+  id SERIAL PRIMARY KEY,
+  call_id INT REFERENCES calls(id) ON DELETE CASCADE,
+  sender_id INT REFERENCES users(id) ON DELETE CASCADE,
+  candidate TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT NOW()
+);

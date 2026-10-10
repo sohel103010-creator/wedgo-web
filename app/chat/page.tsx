@@ -8,6 +8,7 @@ export default function Chat() {
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
   const [me, setMe] = useState<any>(null);
+  const [incoming, setIncoming] = useState<any>(null);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -15,9 +16,47 @@ export default function Chat() {
     if (!token) { window.location.href = "/login"; return; }
     fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } }).then((r) => r.json()).then(setMe);
     loadChats();
-    const iv = setInterval(() => { loadChats(); if (active) loadMessages(active.user_id); }, 5000);
+    const iv = setInterval(() => { loadChats(); if (active) loadMessages(active.user_id); checkIncoming(); }, 5000);
+    checkIncoming();
     return () => clearInterval(iv);
   }, []);
+
+  function checkIncoming() {
+    const token = localStorage.getItem("wedgo_token");
+    fetch("/api/calls", { headers: { Authorization: "Bearer " + token } })
+      .then((r) => r.json()).then((d) => {
+        if (d.incoming) {
+          setIncoming(d.incoming);
+          // Play ringtone
+          try {
+            const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+            const o = ctx.createOscillator();
+            const g = ctx.createGain();
+            o.connect(g); g.connect(ctx.destination);
+            o.frequency.value = 440;
+            g.gain.setValueAtTime(0.3, ctx.currentTime);
+            o.start();
+            setTimeout(() => o.stop(), 1500);
+          } catch {}
+        }
+      });
+  }
+
+  async function startCall(type: "audio" | "video") {
+    if (!active) return;
+    const token = localStorage.getItem("wedgo_token");
+    const r = await fetch("/api/calls", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ receiver_id: active.user_id, call_type: type }),
+    });
+    const d = await r.json();
+    if (d.ok) {
+      window.location.href = `/call/${d.call_id}?caller=1&type=${type}&to=${active.user_id}`;
+    } else {
+      alert(d.error || "কল করা যায়নি");
+    }
+  }
 
   function loadChats() {
     const token = localStorage.getItem("wedgo_token");
@@ -56,7 +95,9 @@ export default function Chat() {
       <div className="container" style={{ display: "flex", flexDirection: "column", height: "100vh", padding: "12px" }}>
         <div className="row" style={{ padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
           <button onClick={() => setActive(null)} style={{ background: "none", border: "none", color: "#fff", fontSize: 20 }}>←</button>
-          <strong>{active.name}</strong>
+          <strong style={{ flex: 1 }}>{active.name}</strong>
+          <button onClick={() => startCall("audio")} style={{ background: "rgba(76,175,80,0.2)", border: "1px solid #4caf50", color: "#fff", padding: "8px 12px", borderRadius: 10, fontSize: 18 }}>🎙</button>
+          <button onClick={() => startCall("video")} style={{ background: "rgba(33,150,243,0.2)", border: "1px solid #2196f3", color: "#fff", padding: "8px 12px", borderRadius: 10, fontSize: 18 }}>📹</button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
           {messages.map((m: any) => (
@@ -104,6 +145,35 @@ export default function Chat() {
         <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
         <Link href="/profile"><span className="ico">👤</span>প্রোফাইল</Link>
       </nav>
+
+      {/* Incoming call popup */}
+      {incoming && (
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.85)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 1000 }}>
+          <div className="card center" style={{ maxWidth: 320 }}>
+            <div style={{ fontSize: 64 }}>{incoming.call_type === "video" ? "📹" : "🎙"}</div>
+            <h2>{incoming.caller_name}</h2>
+            <p className="small">{incoming.call_type === "video" ? "ভিডিও কল" : "অডিও কল"} আসছে...</p>
+            <div className="row mt">
+              <button className="btn" style={{ marginBottom: 0, background: "#4caf50" }}
+                onClick={() => window.location.href = `/call/${incoming.id}?type=${incoming.call_type}`}>
+                ✅ ধরুন
+              </button>
+              <button className="btn" style={{ marginBottom: 0, background: "#f44336" }}
+                onClick={async () => {
+                  const token = localStorage.getItem("wedgo_token");
+                  await fetch(`/api/calls/${incoming.id}`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+                    body: JSON.stringify({ action: "reject" }),
+                  });
+                  setIncoming(null);
+                }}>
+                ❌ কাটুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
