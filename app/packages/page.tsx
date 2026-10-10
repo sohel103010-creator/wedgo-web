@@ -17,8 +17,6 @@ export default function Packages() {
   const [payForm, setPayForm] = useState({ method: "bkash", sender_number: "", trx_id: "" });
   const [msg, setMsg] = useState("");
   const [extra, setExtra] = useState<any[]>([]);
-  const [coupon, setCoupon] = useState("");
-  const [discount, setDiscount] = useState(0);
 
   useEffect(() => {
     fetch("/api/packages").then((r) => r.json()).then((d) => {
@@ -46,18 +44,6 @@ export default function Packages() {
     );
   }
 
-  async function applyCoupon() {
-    if (!coupon.trim() || !selected) return;
-    const r = await fetch("/api/coupons", {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: coupon, amount: selected.price }),
-    });
-    const d = await r.json();
-    if (d.ok) { setDiscount(d.discount); setMsg(`✅ কুপন প্রয়োগ! ছাড়: ৳${d.discount}`); }
-    else setMsg(d.error || "ব্যর্থ");
-  }
-
   async function submitPayment() {
     if (!me?.user) { window.location.href = "/login"; return; }
     setMsg("");
@@ -83,7 +69,6 @@ export default function Packages() {
   return (
     <div className="container page-pad">
       <h2 className="title">💎 প্রিমিয়াম প্যাকেজ</h2>
-      <p className="subtitle">মেয়েদের জন্য সম্পূর্ণ ফ্রি! শুধুমাত্র পুরুষদের কিনতে হবে।</p>
 
       {msg && <div className="alert alert-ok">{msg}</div>}
 
@@ -134,11 +119,6 @@ export default function Packages() {
       {selected && (
         <div ref={payRef} className="card mt" style={{ border: "2px solid #f5a623" }}>
           <h3 className="center">💳 পেমেন্ট — {selected.name} (৳{selected.price})</h3>
-          {discount > 0 && <p className="center" style={{ color: "#4caf50", fontWeight: 700 }}>ছাড়: ৳{discount} → মোট: ৳{selected.price - discount}</p>}
-          <div className="row">
-            <input placeholder="কুপন কোড (যদি থাকে)" value={coupon} onChange={(e) => setCoupon(e.target.value)} style={{ marginBottom: 0 }} />
-            <button className="btn btn-outline" style={{ marginBottom: 0, width: 100 }} onClick={applyCoupon}>প্রয়োগ</button>
-          </div>
           <div className="row" style={{ marginBottom: 12 }}>
             {["bkash", "nagad", "rocket"].map((m) => (
               <button key={m} onClick={() => setPayForm({ ...payForm, method: m })}
