@@ -258,3 +258,14 @@ CREATE TABLE IF NOT EXISTS ice_candidates (
   candidate TEXT NOT NULL,
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+-- Performance indexes (2026-10-10): speed up frequent queries
+CREATE INDEX IF NOT EXISTS idx_messages_participants ON messages(sender_id, receiver_id);
+CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_subscriptions_user ON subscriptions(user_id, status, expires_at);
+CREATE INDEX IF NOT EXISTS idx_profile_views_viewer ON profile_views(viewer_id, viewed_id);
+CREATE INDEX IF NOT EXISTS idx_payments_status ON payments(status, created_at);
+CREATE INDEX IF NOT EXISTS idx_users_mobile ON users(mobile);
+CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, created_at);
+CREATE INDEX IF NOT EXISTS idx_call_history_users ON call_history(caller_id, receiver_id);
+CREATE INDEX IF NOT EXISTS idx_likes_users ON likes(liker_id, liked_id);
