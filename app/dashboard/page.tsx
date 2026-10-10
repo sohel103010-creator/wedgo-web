@@ -34,10 +34,7 @@ export default function Dashboard() {
     if (!token) { window.location.href = "/login"; return; }
     fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } })
       .then((r) => r.json())
-      .then((d) => {
-        setData(d); setLoading(false);
-        if (d.bonusMsg) setTimeout(() => alert(d.bonusMsg), 500);
-      })
+      .then((d) => { setData(d); setLoading(false); })
       .catch(() => { setLoading(false); });
   }, []);
 
