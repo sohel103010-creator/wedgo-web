@@ -35,7 +35,26 @@ export async function POST(req: NextRequest) {
   const user = await getUserFromReq(req);
   if (!user) return NextResponse.json({ error: "লগইন করুন" }, { status: 401 });
 
-  const { action, amount, method, number } = await req.json();
+  const { action, amount, method, number, sender_number, trx_id } = await req.json();
+
+  if (action === "addmoney") {
+    if (user.gender === "female") {
+      return NextResponse.json({ error: "শুধুমাত্র পুরুষ সদস্যরা টাকা যোগ করতে পারবেন" }, { status: 403 });
+    }
+    if (!amount || amount < 10) {
+      return NextResponse.json({ error: "সর্বনিম্ন ১০ টাকা" }, { status: 400 });
+    }
+    if (!sender_number || !trx_id) {
+      return NextResponse.json({ error: "সেন্ড মানি নম্বর ও ট্রানজেকশন আইডি দিন" }, { status: 400 });
+    }
+    // Create a payment record for admin approval (recharge type)
+    await query(
+      `INSERT INTO payments (user_id, package_id, amount, method, sender_number, trx_id, ai_check, extra_label)
+       VALUES ($1, NULL, $2, $3, $4, $5, 'pending', 'ওয়ালেট রিচার্জ')`,
+      [user.id, amount, method, sender_number.trim(), trx_id.trim().toUpperCase()]
+    );
+    return NextResponse.json({ ok: true });
+  }
 
   if (action === "withdraw") {
     if (user.gender !== "female") {

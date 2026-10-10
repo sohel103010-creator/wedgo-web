@@ -111,6 +111,17 @@ export async function POST(req: NextRequest) {
     const pay = await queryOne("SELECT * FROM payments WHERE id = $1", [params.id]);
     if (!pay) return NextResponse.json({ error: "পেমেন্ট পাওয়া যায়নি" }, { status: 404 });
     await query("UPDATE payments SET status = 'approved' WHERE id = $1", [params.id]);
+
+    // Wallet recharge (no package_id)
+    if (pay.extra_label === "ওয়ালেট রিচার্জ" || !pay.package_id) {
+      await query("UPDATE wallet SET balance = balance + $1 WHERE user_id = $2", [pay.amount, pay.user_id]);
+      await query("INSERT INTO wallet_transactions (user_id, amount, ttype, note) VALUES ($1, $2, 'credit', 'ওয়ালেট রিচার্জ')",
+        [pay.user_id, pay.amount]);
+      await query("INSERT INTO notifications (user_id, title, body, ntype) VALUES ($1, 'টাকা যোগ হয়েছে!', $2, 'wallet')",
+        [pay.user_id, `৳${pay.amount} ওয়ালেটে যোগ হয়েছে`]);
+      return NextResponse.json({ ok: true });
+    }
+
     // Activate subscription
     const pkg = await queryOne("SELECT * FROM packages WHERE id = $1", [pay.package_id]);
     const expires = new Date(Date.now() + (pkg?.duration_days || 30) * 86400000);

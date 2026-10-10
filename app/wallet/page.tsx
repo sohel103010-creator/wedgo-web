@@ -5,8 +5,9 @@ import Link from "next/link";
 export default function Wallet() {
   const [data, setData] = useState<any>(null);
   const [me, setMe] = useState<any>(null);
-  const [tab, setTab] = useState<"main" | "withdraw" | "numbers">("main");
+  const [tab, setTab] = useState<"main" | "withdraw" | "numbers" | "addmoney">("main");
   const [wForm, setWForm] = useState({ amount: "", method: "bkash", number: "" });
+  const [aForm, setAForm] = useState({ amount: "", method: "bkash", sender_number: "", trx_id: "" });
   const [nForm, setNForm] = useState({ bkash: "", nagad: "", rocket: "" });
   const [msg, setMsg] = useState("");
 
@@ -31,6 +32,19 @@ export default function Wallet() {
     });
     const d = await r.json();
     setMsg(d.ok ? "✅ উত্তোলন আবেদন জমা হয়েছে!" : (d.error || "ব্যর্থ"));
+  }
+
+  async function addMoney() {
+    setMsg("");
+    const token = localStorage.getItem("wedgo_token");
+    const r = await fetch("/api/wallet", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ action: "addmoney", amount: parseInt(aForm.amount), method: aForm.method, sender_number: aForm.sender_number, trx_id: aForm.trx_id }),
+    });
+    const d = await r.json();
+    setMsg(d.ok ? "✅ টাকা যোগের আবেদন জমা হয়েছে! অ্যাডমিন অনুমোদন দিলে ব্যালেন্স যোগ হবে।" : (d.error || "ব্যর্থ"));
+    if (d.ok) setAForm({ amount: "", method: "bkash", sender_number: "", trx_id: "" });
   }
 
   async function saveNumbers() {
@@ -76,6 +90,7 @@ export default function Wallet() {
       <div className="row" style={{ marginBottom: 14 }}>
         <button className={tab === "main" ? "btn" : "btn btn-outline"} style={{ marginBottom: 0 }} onClick={() => setTab("main")}>হিস্টোরি</button>
         {isFemale && <button className={tab === "withdraw" ? "btn" : "btn btn-outline"} style={{ marginBottom: 0 }} onClick={() => setTab("withdraw")}>উত্তোলন</button>}
+        {!isFemale && <button className={tab === "addmoney" ? "btn" : "btn btn-outline"} style={{ marginBottom: 0 }} onClick={() => setTab("addmoney")}>💵 অ্যাড মানি</button>}
         <button className={tab === "numbers" ? "btn" : "btn btn-outline"} style={{ marginBottom: 0 }} onClick={() => setTab("numbers")}>পেমেন্ট নম্বর</button>
       </div>
 
@@ -124,6 +139,22 @@ export default function Wallet() {
           </select>
           <input placeholder="আপনার নম্বর" value={wForm.number} onChange={(e) => setWForm({ ...wForm, number: e.target.value })} />
           <button className="btn" onClick={withdraw}>আবেদন করুন</button>
+        </div>
+      )}
+
+      {tab === "addmoney" && !isFemale && (
+        <div className="card">
+          <h3>💵 ব্যালেন্সে টাকা যোগ করুন</h3>
+          <p className="small">বিকাশ/নগদ/রকেটে সেন্ড মানি করে তথ্য দিন। অ্যাডমিন অনুমোদন দিলে ব্যালেন্স যোগ হবে।</p>
+          <input type="number" placeholder="টাকার পরিমাণ" value={aForm.amount} onChange={(e) => setAForm({ ...aForm, amount: e.target.value })} />
+          <select value={aForm.method} onChange={(e) => setAForm({ ...aForm, method: e.target.value })}>
+            <option value="bkash">বিকাশ</option>
+            <option value="nagad">নগদ</option>
+            <option value="rocket">রকেট</option>
+          </select>
+          <input placeholder="আপনার সেন্ড মানি নম্বর" value={aForm.sender_number} onChange={(e) => setAForm({ ...aForm, sender_number: e.target.value })} />
+          <input placeholder="ট্রানজেকশন আইডি" value={aForm.trx_id} onChange={(e) => setAForm({ ...aForm, trx_id: e.target.value })} />
+          <button className="btn" onClick={addMoney}>জমা দিন</button>
         </div>
       )}
 
