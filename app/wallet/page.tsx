@@ -10,6 +10,7 @@ export default function Wallet() {
   const [aForm, setAForm] = useState({ amount: "", method: "bkash", sender_number: "", trx_id: "" });
   const [nForm, setNForm] = useState({ bkash: "", nagad: "", rocket: "" });
   const [msg, setMsg] = useState("");
+  const [payNumbers, setPayNumbers] = useState<any>({});
 
   useEffect(() => {
     const token = localStorage.getItem("wedgo_token");
@@ -20,6 +21,11 @@ export default function Wallet() {
         if (d.wallet) setNForm({ bkash: d.wallet.bkash_number || "", nagad: d.wallet.nagad_number || "", rocket: d.wallet.rocket_number || "" });
       });
     fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } }).then((r) => r.json()).then(setMe);
+    // Get admin payment numbers
+    fetch("/api/packages").then((r) => r.json()).then((d) => {
+      const s = d.settings || {};
+      setPayNumbers({ bkash: s.bkash_number, nagad: s.nagad_number, rocket: s.rocket_number });
+    });
   }, []);
 
   async function withdraw() {
@@ -145,7 +151,15 @@ export default function Wallet() {
       {tab === "addmoney" && !isFemale && (
         <div className="card">
           <h3>💵 ব্যালেন্সে টাকা যোগ করুন</h3>
-          <p className="small">বিকাশ/নগদ/রকেটে সেন্ড মানি করে তথ্য দিন। অ্যাডমিন অনুমোদন দিলে ব্যালেন্স যোগ হবে।</p>
+          <div className="center" style={{ background: "rgba(245,166,35,0.12)", borderRadius: 12, padding: 14, marginBottom: 12 }}>
+            <div className="small">
+              {aForm.method === "bkash" ? "বিকাশ" : aForm.method === "nagad" ? "নগদ" : "রকেট"} সেন্ড মানি নম্বর:
+            </div>
+            <div style={{ fontSize: 26, fontWeight: 800, letterSpacing: 1, color: "#f5a623" }}>
+              {payNumbers[aForm.method] || "লোড হচ্ছে..."}
+            </div>
+            <div className="small">এই নম্বরে সেন্ড মানি করুন</div>
+          </div>
           <input type="number" placeholder="টাকার পরিমাণ" value={aForm.amount} onChange={(e) => setAForm({ ...aForm, amount: e.target.value })} />
           <select value={aForm.method} onChange={(e) => setAForm({ ...aForm, method: e.target.value })}>
             <option value="bkash">বিকাশ</option>
