@@ -249,7 +249,12 @@ export default function Chat() {
             📷<input type="file" accept="image/*" onChange={sendPhoto} style={{ display: "none" }} />
           </label>
           <button onClick={recording ? stopRecording : startRecording}
-            style={{ background: recording ? "#f44336" : "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px 12px", borderRadius: 12, fontSize: 18 }}>
+            style={{
+              background: recording ? "#f44336" : "rgba(255,255,255,0.1)",
+              border: "1px solid rgba(255,255,255,0.2)",
+              color: "#fff", padding: "10px 12px", borderRadius: 12, fontSize: 18,
+              display: (me?.user?.role === "admin" || me?.user?.gender === "female" || (me?.subscription?.price || 0) >= 2000) ? "" : "none"
+            }}>
             {recording ? "⏹" : "🎤"}
           </button>
           <input placeholder="মেসেজ লিখুন..." value={text} onChange={(e) => { setText(e.target.value); onTyping(); }}

@@ -113,8 +113,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ছবি শেয়ার করতে উচ্চতর প্যাকেজ লাগবে" }, { status: 403 });
   }
 
-  if (msg_type === "voice" && !canPhoto) {
-    return NextResponse.json({ error: "ভয়েস মেসেজ পাঠাতে উচ্চতর প্যাকেজ লাগবে" }, { status: 403 });
+  if (msg_type === "voice") {
+    // Voice messages: only for package 3 & 4 (price >= 2000)
+    let canVoice = isAdmin;
+    if (isFemale) {
+      const maleSub = await getActiveSubscription(receiver_id);
+      canVoice = (maleSub?.price || 0) >= 2000;
+    } else if (sub) {
+      canVoice = (sub.price || 0) >= 2000;
+    }
+    if (!canVoice) {
+      return NextResponse.json({ error: "ভয়েস মেসেজ পাঠাতে গোল্ড/প্লাটিনাম প্যাকেজ লাগবে" }, { status: 403 });
+    }
   }
 
   const blocked = containsBlocked(content, canNum, canLink);
