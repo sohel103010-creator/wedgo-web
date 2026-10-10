@@ -4,6 +4,7 @@ import Link from "next/link";
 
 export default function Chat() {
   const [chats, setChats] = useState<any[]>([]);
+  const [requests, setRequests] = useState<any[]>([]);
   const [active, setActive] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
   const [text, setText] = useState("");
@@ -67,6 +68,18 @@ export default function Chat() {
     const token = localStorage.getItem("wedgo_token");
     fetch("/api/chat", { headers: { Authorization: "Bearer " + token } })
       .then((r) => r.json()).then((d) => setChats(d.chats || []));
+    fetch("/api/chat-requests", { headers: { Authorization: "Bearer " + token } })
+      .then((r) => r.json()).then((d) => setRequests(d.received || []));
+  }
+
+  async function handleRequest(senderId: number, action: string) {
+    const token = localStorage.getItem("wedgo_token");
+    await fetch("/api/chat-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ receiver_id: senderId, action }),
+    });
+    loadChats();
   }
 
   function loadMessages(uid: number) {
@@ -250,6 +263,27 @@ export default function Chat() {
   return (
     <div className="container page-pad">
       <h2 className="title">💬 মেসেজ</h2>
+      {requests.length > 0 && (
+        <div className="card" style={{ border: "2px solid #e91e63" }}>
+          <h3>💌 চ্যাট রিকোয়েস্ট ({requests.length})</h3>
+          {requests.map((r: any) => (
+            <div key={r.id} className="row-between" style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+              <div className="row" style={{ alignItems: "center", gap: 10 }}>
+                <div style={{ width: 40, height: 40, borderRadius: "50%", overflow: "hidden", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                  {r.sender_photo ? <img src={r.sender_photo} style={{ width: "100%", height: "100%", objectFit: "cover" }} /> : "👤"}
+                </div>
+                <strong>{r.sender_name}</strong>
+              </div>
+              <div className="row" style={{ gap: 8 }}>
+                <button className="btn" style={{ marginBottom: 0, padding: "6px 12px", fontSize: 13, width: "auto", background: "#4caf50" }}
+                  onClick={() => handleRequest(r.sender_id, "accept")}>✅</button>
+                <button className="btn" style={{ marginBottom: 0, padding: "6px 12px", fontSize: 13, width: "auto", background: "#f44336" }}
+                  onClick={() => handleRequest(r.sender_id, "reject")}>❌</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
       {chats.length === 0 && (
         <div className="card center">
           <p>এখনো কোনো চ্যাট নেই</p>

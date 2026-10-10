@@ -34,8 +34,45 @@ export default function PartnerDetail() {
     else alert(d.error || "ব্যর্থ");
   }
 
-  async function startChat() {
-    window.location.href = "/chat";
+  const [chatStatus, setChatStatus] = useState("");
+  const [showGifts, setShowGifts] = useState(false);
+  const [gifts, setGifts] = useState<any[]>([]);
+
+  async function sendChatRequest() {
+    const token = localStorage.getItem("wedgo_token");
+    const r = await fetch("/api/chat-requests", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ receiver_id: params.id, action: "send" }),
+    });
+    const d = await r.json();
+    if (d.ok) { setChatStatus("pending"); alert("💌 চ্যাট রিকোয়েস্ট পাঠানো হয়েছে!"); }
+    else alert(d.error || "ব্যর্থ");
+  }
+
+  useEffect(() => {
+    const token = localStorage.getItem("wedgo_token");
+    if (token) {
+      fetch("/api/chat-requests", { headers: { Authorization: "Bearer " + token } })
+        .then((r) => r.json()).then((d) => {
+          const s = (d.sent || []).find((x: any) => x.receiver_id == params.id);
+          if (s) setChatStatus(s.status);
+        });
+    }
+    fetch("/api/gifts").then((r) => r.json()).then((d) => setGifts(d.gifts || []));
+  }, []);
+
+  async function sendGift(giftId: number) {
+    if (!confirm("গিফট পাঠাবেন?")) return;
+    const token = localStorage.getItem("wedgo_token");
+    const r = await fetch("/api/gifts", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ receiver_id: params.id, gift_id: giftId }),
+    });
+    const d = await r.json();
+    alert(d.ok ? "🎁 গিফট পাঠানো হয়েছে!" : (d.error || "ব্যর্থ"));
+    setShowGifts(false);
   }
 
   async function doAction(action: string, extra: any = {}) {
@@ -74,13 +111,35 @@ export default function PartnerDetail() {
           <button className="btn" style={{ marginBottom: 0, background: liked ? "#4caf50" : undefined }} onClick={sendLike} disabled={liked}>
             {liked ? "❤️ পাঠানো হয়েছে" : "❤️ লাভ রিয়াক্ট"}
           </button>
-          <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={startChat}>💬 মেসেজ</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={() => window.location.href = "/chat"}>💬 চ্যাট</button>
+          {chatStatus === "" && (
+            <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={sendChatRequest}>💌 রিকোয়েস্ট</button>
+          )}
+          {chatStatus === "pending" && <span className="small" style={{ color: "#f5a623" }}>⏳ রিকোয়েস্ট পাঠানো হয়েছে</span>}
+          {chatStatus === "accepted" && <span className="small" style={{ color: "#4caf50" }}>✅ গৃহীত হয়েছে</span>}
         </div>
         <div className="row mt">
           <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={() => doAction("favorite")}>⭐ ফেভারিট</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={() => setShowGifts(!showGifts)}>🎁 গিফট</button>
           <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={report}>🚩 রিপোর্ট</button>
           <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13, borderColor: "#f44336", color: "#f44336" }} onClick={() => { if (confirm("ব্লক করবেন?")) doAction("block"); }}>🚫 ব্লক</button>
         </div>
+
+        {showGifts && (
+          <div className="card" style={{ border: "2px solid #e91e63" }}>
+            <h3>🎁 গিফট পাঠান</h3>
+            <div className="row">
+              {gifts.map((g: any) => (
+                <button key={g.id} onClick={() => sendGift(g.id)}
+                  style={{ background: "rgba(255,255,255,0.08)", border: "1px solid rgba(255,255,255,0.2)", borderRadius: 12, padding: 12, flex: "1 1 28%", color: "#fff" }}>
+                  <div style={{ fontSize: 32 }}>{g.emoji}</div>
+                  <div className="small">{g.name}</div>
+                  <div style={{ color: "#f5a623", fontWeight: 700 }}>৳{g.price}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="card">

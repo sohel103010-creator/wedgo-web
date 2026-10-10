@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import InstallPrompt from "../components/InstallPrompt";
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
@@ -33,7 +34,10 @@ export default function Dashboard() {
     if (!token) { window.location.href = "/login"; return; }
     fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } })
       .then((r) => r.json())
-      .then((d) => { setData(d); setLoading(false); })
+      .then((d) => {
+        setData(d); setLoading(false);
+        if (d.bonusMsg) setTimeout(() => alert(d.bonusMsg), 500);
+      })
       .catch(() => { setLoading(false); });
   }, []);
 
@@ -59,6 +63,8 @@ export default function Dashboard() {
           {expiryWarn} <Link href="/packages" style={{ color: "#f5a623" }}>রিনিউ করুন</Link>
         </div>
       )}
+
+      <InstallPrompt />
       <div className="row-between" style={{ marginTop: 10 }}>
         <h2>👋 {user.name}</h2>
         <button onClick={logout} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 14px", borderRadius: 10 }}>লগআউট</button>

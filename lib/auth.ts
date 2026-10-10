@@ -35,6 +35,26 @@ export async function ensureSchemaAndSeed(): Promise<void> {
   await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS boosted_until TIMESTAMP").catch(() => {});
   await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS selfie_photo TEXT").catch(() => {});
   await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) DEFAULT 'none'").catch(() => {});
+  await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS last_bonus_date DATE").catch(() => {});
+  // Chat requests
+  await query(`CREATE TABLE IF NOT EXISTS chat_requests (
+    id SERIAL PRIMARY KEY, sender_id INTEGER REFERENCES users(id), receiver_id INTEGER REFERENCES users(id),
+    status VARCHAR(20) DEFAULT 'pending', created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(sender_id, receiver_id)
+  )`).catch(() => {});
+  // Gifts
+  await query(`CREATE TABLE IF NOT EXISTS gifts (
+    id SERIAL PRIMARY KEY, name VARCHAR(50), emoji VARCHAR(10), price INTEGER, active BOOLEAN DEFAULT TRUE
+  )`).catch(() => {});
+  await query(`CREATE TABLE IF NOT EXISTS gift_sends (
+    id SERIAL PRIMARY KEY, sender_id INTEGER REFERENCES users(id), receiver_id INTEGER REFERENCES users(id),
+    gift_id INTEGER REFERENCES gifts(id), created_at TIMESTAMP DEFAULT NOW()
+  )`).catch(() => {});
+  // Seed gifts
+  await query(`INSERT INTO gifts (name, emoji, price) VALUES
+    ('গোলাপ', '🌹', 50), ('চকলেট', '🍫', 100), ('টেডি', '🧸', 200),
+    ('হীরা', '💎', 500), ('মুকুট', '👑', 1000)
+    ON CONFLICT DO NOTHING`).catch(() => {});
   // Coupons
   await query(`CREATE TABLE IF NOT EXISTS coupons (
     id SERIAL PRIMARY KEY, code VARCHAR(30) UNIQUE NOT NULL, discount_pct INTEGER DEFAULT 0,
