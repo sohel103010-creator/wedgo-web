@@ -112,8 +112,8 @@ export async function POST(req: NextRequest) {
     if (!pay) return NextResponse.json({ error: "পেমেন্ট পাওয়া যায়নি" }, { status: 404 });
     await query("UPDATE payments SET status = 'approved' WHERE id = $1", [params.id]);
 
-    // Wallet recharge (no package_id)
-    if (pay.extra_label === "ওয়ালেট রিচার্জ" || !pay.package_id) {
+    // Wallet recharge
+    if (pay.extra_label === "ওয়ালেট রিচার্জ") {
       await query("UPDATE wallet SET balance = balance + $1 WHERE user_id = $2", [pay.amount, pay.user_id]);
       await query("INSERT INTO wallet_transactions (user_id, amount, ttype, note) VALUES ($1, $2, 'credit', 'ওয়ালেট রিচার্জ')",
         [pay.user_id, pay.amount]);
@@ -122,7 +122,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ ok: true });
     }
 
+    // Extra minutes purchase (e.g. "১০ মিনিট ভিডিও কল")
+    if (pay.extra_label && pay.extra_label.includes("মিনিট")) {
+      const mins = parseInt(pay.extra_label) || 0;
+      const isVideo = pay.extra_label.includes("ভিডিও");
+      const sub = await queryOne(
+        "SELECT * FROM subscriptions WHERE user_id = $1 AND status = 'active' AND expires_at > NOW() ORDER BY expires_at DESC LIMIT 1",
+        [pay.user_id]
+      );
+      if (sub) {
+        if (isVideo) {
+          await query("UPDATE subscriptions SET video_minutes = video_minutes + $1 WHERE id = $2", [mins, sub.id]);
+        } else {
+          await query("UPDATE subscriptions SET audio_minutes = audio_minutes + $1 WHERE id = $2", [mins, sub.id]);
+        }
+        await query("INSERT INTO notifications (user_id, title, body, ntype) VALUES ($1, 'মিনিট যোগ হয়েছে!', $2, 'premium')",
+          [pay.user_id, `${mins} মিনিট ${isVideo ? "ভিডিও" : "অডিও"} কল যোগ হয়েছে`]);
+      }
+      return NextResponse.json({ ok: true });
+    }
+
     // Activate subscription
+    if (!pay.package_id) {
+      return NextResponse.json({ error: "প্যাকেজ পাওয়া যায়নি" }, { status: 400 });
+    }
     const pkg = await queryOne("SELECT * FROM packages WHERE id = $1", [pay.package_id]);
     const expires = new Date(Date.now() + (pkg?.duration_days || 30) * 86400000);
     await query(
