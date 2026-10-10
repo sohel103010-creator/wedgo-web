@@ -3,30 +3,29 @@ import { useState, useEffect } from "react";
 
 export default function InstallPrompt() {
   const [prompt, setPrompt] = useState<any>(null);
-  const [show, setShow] = useState(false);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
     if (localStorage.getItem("pwa_dismissed")) { setDismissed(true); return; }
-    // Show after 3 seconds
-    const t = setTimeout(() => setShow(true), 3000);
     const handler = (e: any) => {
       e.preventDefault();
       setPrompt(e);
     };
     window.addEventListener("beforeinstallprompt", handler);
-    return () => { window.removeEventListener("beforeinstallprompt", handler); clearTimeout(t); };
+    return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  if (!show || dismissed) return null;
+  // Only show when native install is available
+  if (!prompt || dismissed) return null;
 
   function install() {
-    if (prompt) {
-      prompt.prompt();
-      prompt.userChoice.then(() => setShow(false));
-    } else {
-      alert("📲 ইনস্টল করতে:\n\nAndroid (Chrome): মেনু (⋮) → \"Add to Home screen\"\n\niPhone (Safari): Share (⎙) → \"Add to Home Screen\"");
-    }
+    prompt.prompt();
+    prompt.userChoice.then((choice: any) => {
+      if (choice.outcome === "accepted") {
+        localStorage.setItem("pwa_dismissed", "1");
+      }
+      setPrompt(null);
+    });
   }
 
   function dismiss() {
