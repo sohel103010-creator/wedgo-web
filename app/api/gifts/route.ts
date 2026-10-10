@@ -28,8 +28,8 @@ export async function POST(req: NextRequest) {
   await query("INSERT INTO gift_sends (sender_id, receiver_id, gift_id) VALUES ($1, $2, $3)",
     [user.id, receiver_id, gift_id]);
 
-  // 70% goes to receiver (if female), 30% platform
-  const receiverCut = Math.round(gift.price * 0.7);
+  // 50% goes to receiver, 50% to admin/platform
+  const receiverCut = Math.round(gift.price * 0.5);
   await query("UPDATE wallet SET balance = balance + $1, total_earned = total_earned + $1 WHERE user_id = $2",
     [receiverCut, receiver_id]);
 
