@@ -1,5 +1,5 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 
 export default function Packages() {
@@ -7,6 +7,13 @@ export default function Packages() {
   const [settings, setSettings] = useState<any>({});
   const [me, setMe] = useState<any>(null);
   const [selected, setSelected] = useState<any>(null);
+  const payRef = useRef<HTMLDivElement>(null);
+
+  function selectPackage(p: any) {
+    setSelected(p);
+    // Scroll to payment form after it renders
+    setTimeout(() => payRef.current?.scrollIntoView({ behavior: "smooth", block: "center" }), 100);
+  }
   const [payForm, setPayForm] = useState({ method: "bkash", sender_number: "", trx_id: "" });
   const [msg, setMsg] = useState("");
   const [extra, setExtra] = useState<any[]>([]);
@@ -94,7 +101,7 @@ export default function Packages() {
             <li className={p.link_share ? "" : "no"}>লিংক শেয়ার {p.link_share ? "" : "নেই"}</li>
             <li className={p.unlimited_views ? "" : "no"}>{p.unlimited_views ? "আনলিমিটেড প্রোফাইল ভিউ" : p.profile_views ? `${p.profile_views}টি প্রোফাইল ভিউ` : "প্রোফাইল ভিউ সীমিত"}</li>
           </ul>
-          <button className="btn btn-gold" onClick={() => setSelected(p)}>কিনুন</button>
+          <button className="btn btn-gold" onClick={() => selectPackage(p)}>কিনুন</button>
         </div>
       ))}
 
@@ -115,7 +122,7 @@ export default function Packages() {
               <div className="row" style={{ gap: 8, alignItems: "center" }}>
                 <strong style={{ color: "#f5a623" }}>৳{e.price}</strong>
                 <button className="btn" style={{ marginBottom: 0, padding: "6px 14px", fontSize: 13, width: "auto" }}
-                  onClick={() => setSelected({ ...e, isExtra: true })}>কিনুন</button>
+                  onClick={() => selectPackage({ ...e, isExtra: true })}>কিনুন</button>
               </div>
             </div>
           ))}
@@ -125,7 +132,7 @@ export default function Packages() {
 
       {/* Payment modal */}
       {selected && (
-        <div className="card mt" style={{ border: "2px solid #f5a623" }}>
+        <div ref={payRef} className="card mt" style={{ border: "2px solid #f5a623" }}>
           <h3 className="center">💳 পেমেন্ট — {selected.name} (৳{selected.price})</h3>
           {discount > 0 && <p className="center" style={{ color: "#4caf50", fontWeight: 700 }}>ছাড়: ৳{discount} → মোট: ৳{selected.price - discount}</p>}
           <div className="row">
