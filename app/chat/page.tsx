@@ -11,6 +11,7 @@ export default function Chat() {
   const [incoming, setIncoming] = useState<any>(null);
   const [typing, setTyping] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [replyTo, setReplyTo] = useState<any>(null);
   const mediaRef = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
@@ -88,11 +89,30 @@ export default function Chat() {
     const r = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify({ receiver_id: active.user_id, content, msg_type: msgType }),
+      body: JSON.stringify({ receiver_id: active.user_id, content, msg_type: msgType, reply_to: replyTo?.id }),
     });
     const d = await r.json();
-    if (d.ok) { setText(""); loadMessages(active.user_id); }
+    if (d.ok) { setText(""); setReplyTo(null); loadMessages(active.user_id); }
     else alert(d.error || "পাঠানো যায়নি");
+  }
+
+  async function deleteMsg(id: number, forEveryone: boolean) {
+    const token = localStorage.getItem("wedgo_token");
+    await fetch(`/api/chat?id=${id}&all=${forEveryone ? 1 : 0}`, {
+      method: "DELETE",
+      headers: { Authorization: "Bearer " + token },
+    });
+    loadMessages(active.user_id);
+  }
+
+  async function pinMsg(id: number, pinned: boolean) {
+    const token = localStorage.getItem("wedgo_token");
+    await fetch("/api/chat", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ id, pinned: !pinned }),
+    });
+    loadMessages(active.user_id);
   }
 
   async function startRecording() {
@@ -145,26 +165,48 @@ export default function Chat() {
 
   function renderMessage(m: any) {
     const isMe = m.sender_id === me?.user?.id;
-    if (m.msg_type === "photo") {
+    if (m.deleted && !isMe) return null;
+    const msgContent = m.deleted ? <em style={{ opacity: 0.5 }}>আপনি মেসেজটি ডিলিট করেছেন</em> : null;
+
+    const actions = (
+      <div style={{ display: "flex", gap: 6, marginTop: 4, fontSize: 12 }}>
+        <button onClick={() => setReplyTo(m)} style={{ background: "none", border: "none", color: "#f5a623", fontSize: 12 }}>↩️</button>
+        {isMe && (
+          <>
+            <button onClick={() => pinMsg(m.id, m.pinned)} style={{ background: "none", border: "none", color: "#f5a623", fontSize: 12 }}>{m.pinned ? "📌" : "📍"}</button>
+            <button onClick={() => { if (confirm("ডিলিট করবেন?")) deleteMsg(m.id, false); }} style={{ background: "none", border: "none", color: "#f44336", fontSize: 12 }}>🗑</button>
+            <button onClick={() => { if (confirm("সবার জন্য ডিলিট করবেন?")) deleteMsg(m.id, true); }} style={{ background: "none", border: "none", color: "#f44336", fontSize: 12 }}>🗑👥</button>
+          </>
+        )}
+      </div>
+    );
+
+    if (m.msg_type === "photo" && !m.deleted) {
       return (
         <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`} style={{ padding: 4 }}>
+          {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
           <img src={m.content} style={{ maxWidth: 220, borderRadius: 12 }} />
           <div className="small" style={{ fontSize: 10, opacity: 0.7, padding: "0 8px 4px" }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+          {actions}
         </div>
       );
     }
-    if (m.msg_type === "voice") {
+    if (m.msg_type === "voice" && !m.deleted) {
       return (
         <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`}>
+          {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
           <audio controls src={m.content} style={{ maxWidth: 200 }} />
           <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+          {actions}
         </div>
       );
     }
     return (
       <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`}>
-        {m.content}
+        {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
+        {m.deleted ? msgContent : m.content}
         <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+        {actions}
       </div>
     );
   }
@@ -183,6 +225,12 @@ export default function Chat() {
           {typing && <div className="chat-bubble chat-them"><em>টাইপ করছেন...</em></div>}
           <div ref={bottomRef}></div>
         </div>
+        {replyTo && (
+          <div style={{ background: "rgba(245,166,35,0.15)", border: "1px solid #f5a623", borderRadius: 10, padding: "8px 12px", marginBottom: 8, display: "flex", justifyContent: "space-between" }}>
+            <span className="small">↩️ রিপ্লাই: {replyTo.content?.substring(0, 50)}</span>
+            <button onClick={() => setReplyTo(null)} style={{ background: "none", border: "none", color: "#fff" }}>✕</button>
+          </div>
+        )}
         <div className="row" style={{ padding: "10px 0" }}>
           <label style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px 12px", borderRadius: 12, fontSize: 18, cursor: "pointer" }}>
             📷<input type="file" accept="image/*" onChange={sendPhoto} style={{ display: "none" }} />
@@ -243,10 +291,10 @@ export default function Chat() {
               <button className="btn" style={{ marginBottom: 0, background: "#f44336" }}
                 onClick={async () => {
                   const token = localStorage.getItem("wedgo_token");
-                  await fetch(`/api/calls/${incoming.id}`, {
-                    method: "POST",
+                  await fetch("/api/calls", {
+                    method: "PUT",
                     headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-                    body: JSON.stringify({ action: "reject" }),
+                    body: JSON.stringify({ call_id: incoming.id, action: "missed" }),
                   });
                   setIncoming(null);
                 }}>

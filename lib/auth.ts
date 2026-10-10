@@ -24,6 +24,28 @@ export async function ensureSchemaAndSeed(): Promise<void> {
   await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS hide_online BOOLEAN DEFAULT FALSE").catch(() => {});
   await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS theme VARCHAR(10) DEFAULT 'dark'").catch(() => {});
   await query("ALTER TABLE payments ADD COLUMN IF NOT EXISTS extra_label VARCHAR(100)").catch(() => {});
+  // Dedupe packages: the seed INSERT has no UNIQUE target, so every cold start added 4 more rows (2026-10-10)
+  await query("UPDATE subscriptions s SET package_id = k.keep_id FROM (SELECT MIN(id) AS keep_id, name, price FROM packages GROUP BY name, price) k JOIN packages p ON p.name = k.name AND p.price = k.price WHERE s.package_id = p.id AND s.package_id <> k.keep_id").catch(() => {});
+  await query("UPDATE payments pmt SET package_id = k.keep_id FROM (SELECT MIN(id) AS keep_id, name, price FROM packages GROUP BY name, price) k JOIN packages p ON p.name = k.name AND p.price = k.price WHERE pmt.package_id = p.id AND pmt.package_id <> k.keep_id").catch(() => {});
+  await query("DELETE FROM packages p USING packages q WHERE p.name = q.name AND p.price = q.price AND p.id > q.id").catch(() => {});
+  await query("DO $$ BEGIN ALTER TABLE packages ADD CONSTRAINT packages_name_price_unique UNIQUE (name, price); EXCEPTION WHEN duplicate_object THEN NULL; END $$").catch(() => {});
+  await query("ALTER TABLE messages ADD COLUMN IF NOT EXISTS reply_to INTEGER").catch(() => {});
+  await query("ALTER TABLE messages ADD COLUMN IF NOT EXISTS deleted BOOLEAN DEFAULT FALSE").catch(() => {});
+  await query("ALTER TABLE messages ADD COLUMN IF NOT EXISTS pinned BOOLEAN DEFAULT FALSE").catch(() => {});
+  await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS boosted_until TIMESTAMP").catch(() => {});
+  await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS selfie_photo TEXT").catch(() => {});
+  await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS verification_status VARCHAR(20) DEFAULT 'none'").catch(() => {});
+  // Coupons
+  await query(`CREATE TABLE IF NOT EXISTS coupons (
+    id SERIAL PRIMARY KEY, code VARCHAR(30) UNIQUE NOT NULL, discount_pct INTEGER DEFAULT 0,
+    discount_amount INTEGER DEFAULT 0, max_uses INTEGER DEFAULT 0, used_count INTEGER DEFAULT 0,
+    active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW()
+  )`).catch(() => {});
+  // Success stories
+  await query(`CREATE TABLE IF NOT EXISTS success_stories (
+    id SERIAL PRIMARY KEY, couple_names VARCHAR(200), story TEXT, photo TEXT,
+    active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW()
+  )`).catch(() => {});
 }
 
 // One-time migrations for existing databases

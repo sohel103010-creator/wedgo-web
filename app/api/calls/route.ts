@@ -95,3 +95,25 @@ export async function GET(req: NextRequest) {
 
   return NextResponse.json({ incoming: incoming.rows[0] || null });
 }
+
+export async function PUT(req: NextRequest) {
+  const user = await getUserFromReq(req);
+  if (!user) return NextResponse.json({ error: "লগইন করুন" }, { status: 401 });
+  const { call_id, action } = await req.json();
+
+  if (action === "missed") {
+    // Mark as missed and notify caller
+    await query("UPDATE calls SET status = 'missed' WHERE id = $1", [call_id]);
+    const c = await queryOne("SELECT caller_id, receiver_id, call_type FROM calls WHERE id = $1", [call_id]);
+    if (c) {
+      await query("INSERT INTO notifications (user_id, title, body, ntype) VALUES ($1, $2, $3, 'call')",
+        [c.caller_id, "📵 মিসড কল", `আপনার ${c.call_type === "video" ? "ভিডিও" : "অডিও"} কলের উত্তর দেওয়া হয়নি`]);
+    }
+    return NextResponse.json({ ok: true });
+  }
+  if (action === "reject") {
+    await query("UPDATE calls SET status = 'rejected' WHERE id = $1", [call_id]);
+    return NextResponse.json({ ok: true });
+  }
+  return NextResponse.json({ error: "অজানা" }, { status: 400 });
+}

@@ -19,6 +19,18 @@ export default function Profile() {
     window.location.href = "/login";
   }
 
+  async function boost(hours: number) {
+    if (!confirm(`${hours} ঘণ্টার বুস্ট কিনবেন?`)) return;
+    const token = localStorage.getItem("wedgo_token");
+    const r = await fetch("/api/boost", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ hours }),
+    });
+    const d = await r.json();
+    alert(d.ok ? "🚀 বুস্ট চালু হয়েছে!" : (d.error || "ব্যর্থ"));
+  }
+
   useEffect(() => {
     const t = localStorage.getItem("wedgo_theme");
     if (t) document.documentElement.setAttribute("data-theme", t);
@@ -158,6 +170,52 @@ export default function Profile() {
         <div className="row">
           <button onClick={() => setTheme("dark")} className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }}>🌙 ডার্ক</button>
           <button onClick={() => setTheme("light")} className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }}>☀️ লাইট</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>✅ ভেরিফিকেশন</h3>
+        {profile.verification_status === "approved" ? (
+          <p style={{ color: "#4caf50", fontWeight: 700 }}>✓ ভেরিফাইড প্রোফাইল</p>
+        ) : profile.verification_status === "pending" ? (
+          <p className="small">⏳ যাচাই চলছে...</p>
+        ) : (
+          <>
+            <p className="small">সেলফি আপলোড করে ভেরিফাইড ব্যাজ পান</p>
+            <input type="file" accept="image/*" onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const reader = new FileReader();
+              reader.onload = async () => {
+                const img = new Image();
+                img.onload = async () => {
+                  const c = document.createElement("canvas");
+                  const scale = Math.min(1, 600 / img.width);
+                  c.width = img.width * scale; c.height = img.height * scale;
+                  c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+                  const token = localStorage.getItem("wedgo_token");
+                  const r = await fetch("/api/verify", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+                    body: JSON.stringify({ selfie: c.toDataURL("image/jpeg", 0.7) }),
+                  });
+                  const d = await r.json();
+                  alert(d.ok ? "✅ সেলফি জমা হয়েছে! অ্যাডমিন যাচাই করবে।" : (d.error || "ব্যর্থ"));
+                };
+                img.src = reader.result as string;
+              };
+              reader.readAsDataURL(f);
+            }} />
+          </>
+        )}
+      </div>
+
+      <div className="card">
+        <h3>🚀 প্রোফাইল বুস্ট</h3>
+        <p className="small">বুস্ট করলে আপনার প্রোফাইল সবার উপরে দেখাবে</p>
+        <div className="row">
+          <button className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }} onClick={() => boost(24)}>২৪ ঘণ্টা — ৳১০০</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }} onClick={() => boost(72)}>৭২ ঘণ্টা — ৳২০০</button>
         </div>
       </div>
 

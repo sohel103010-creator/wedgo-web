@@ -110,3 +110,25 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({ ok: true });
 }
+
+export async function DELETE(req: NextRequest) {
+  const user = await getUserFromReq(req);
+  if (!user) return NextResponse.json({ error: "লগইন করুন" }, { status: 401 });
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+  const forEveryone = searchParams.get("all") === "1";
+  if (forEveryone) {
+    await query("UPDATE messages SET content = '[ডিলিট করা হয়েছে]', msg_type = 'text' WHERE id = $1 AND sender_id = $2", [id, user.id]);
+  } else {
+    await query("UPDATE messages SET deleted = TRUE WHERE id = $1 AND sender_id = $2", [id, user.id]);
+  }
+  return NextResponse.json({ ok: true });
+}
+
+export async function PATCH(req: NextRequest) {
+  const user = await getUserFromReq(req);
+  if (!user) return NextResponse.json({ error: "লগইন করুন" }, { status: 401 });
+  const { id, pinned } = await req.json();
+  await query("UPDATE messages SET pinned = $1 WHERE id = $2 AND sender_id = $3", [pinned, id, user.id]);
+  return NextResponse.json({ ok: true });
+}

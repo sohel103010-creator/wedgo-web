@@ -46,7 +46,7 @@ export default function Admin() {
   const tabs = [
     ["stats", "📊 ড্যাশবোর্ড"], ["users", "👥 সদস্য"], ["payments", "💳 পেমেন্ট"],
     ["withdrawals", "💸 উত্তোলন"], ["calls", "📞 কল রিপোর্ট"],
-    ["reports", "🚩 রিপোর্ট"], ["settings", "⚙️ সেটিংস"],
+    ["reports", "🚩 রিপোর্ট"], ["verify", "✅ ভেরিফাই"], ["settings", "⚙️ সেটিংস"],
   ];
 
   const s = data.stats;
@@ -189,6 +189,10 @@ export default function Admin() {
         </div>
       )}
 
+      {tab === "verify" && (
+        <VerifyTab />
+      )}
+
       {tab === "settings" && (
         <>
           <div className="card">
@@ -254,6 +258,52 @@ export default function Admin() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+function VerifyTab() {
+  const [pending, setPending] = useState<any[]>([]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("wedgo_admin_token");
+    fetch("/api/verify", { headers: { Authorization: "Bearer " + token } })
+      .then((r) => r.json()).then((d) => setPending(d.pending || []));
+  }, []);
+
+  async function decide(user_id: number, status: string) {
+    const token = localStorage.getItem("wedgo_admin_token");
+    await fetch("/api/verify", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ user_id, status }),
+    });
+    setPending(pending.filter((p) => p.id !== user_id));
+  }
+
+  return (
+    <div className="card">
+      <h3>✅ ভেরিফিকেশন অনুরোধ</h3>
+      {pending.map((p: any) => (
+        <div key={p.id} className="card" style={{ background: "rgba(255,255,255,0.04)" }}>
+          <strong>{p.name}</strong>
+          <div className="row mt">
+            <div style={{ flex: 1 }}>
+              <div className="small">সেলফি</div>
+              <img src={p.selfie_photo} style={{ width: "100%", borderRadius: 10 }} />
+            </div>
+            <div style={{ flex: 1 }}>
+              <div className="small">প্রোফাইল ছবি</div>
+              {p.photo1 ? <img src={p.photo1} style={{ width: "100%", borderRadius: 10 }} /> : <p className="small">নেই</p>}
+            </div>
+          </div>
+          <div className="row mt">
+            <button className="btn" style={{ marginBottom: 0, background: "#4caf50" }} onClick={() => decide(p.id, "approved")}>✅ অনুমোদন</button>
+            <button className="btn" style={{ marginBottom: 0, background: "#f44336" }} onClick={() => decide(p.id, "rejected")}>❌ বাতিল</button>
+          </div>
+        </div>
+      ))}
+      {pending.length === 0 && <p className="small">কোনো অনুরোধ নেই</p>}
     </div>
   );
 }

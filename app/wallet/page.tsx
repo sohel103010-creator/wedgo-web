@@ -58,6 +58,18 @@ export default function Wallet() {
       <div className="card center">
         <div className="small">বর্তমান ব্যালেন্স</div>
         <div style={{ fontSize: 40, fontWeight: 800, color: "#f5a623" }}>৳{w?.balance || 0}</div>
+        {(data?.daily_earning > 0 || data?.monthly_earning > 0) && (
+          <div className="row mt" style={{ gap: 16 }}>
+            <div className="center" style={{ flex: 1, background: "rgba(76,175,80,0.15)", borderRadius: 10, padding: 10 }}>
+              <div className="small">আজকের আয়</div>
+              <strong style={{ color: "#4caf50" }}>৳{data?.daily_earning || 0}</strong>
+            </div>
+            <div className="center" style={{ flex: 1, background: "rgba(33,150,243,0.15)", borderRadius: 10, padding: 10 }}>
+              <div className="small">এই মাসের আয়</div>
+              <strong style={{ color: "#2196f3" }}>৳{data?.monthly_earning || 0}</strong>
+            </div>
+          </div>
+        )}
         {isFemale && <div className="small mt">মোট আয়: ৳{w?.total_earned || 0} | মোট উত্তোলন: ৳{w?.total_withdrawn || 0}</div>}
       </div>
 

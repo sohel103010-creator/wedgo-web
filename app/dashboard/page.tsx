@@ -5,6 +5,28 @@ import Link from "next/link";
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [recommended, setRecommended] = useState<any[]>([]);
+  const [expiryWarn, setExpiryWarn] = useState("");
+
+  useEffect(() => {
+    const token = localStorage.getItem("wedgo_token");
+    if (token) {
+      fetch("/api/recommended", { headers: { Authorization: "Bearer " + token } })
+        .then((r) => r.json()).then((d) => setRecommended(d.recommended || []));
+      // Check subscription expiry
+      fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } }).then((r) => r.json()).then((d) => {
+        const sub = d?.subscription;
+        if (sub?.expiry_date) {
+          const days = Math.ceil((new Date(sub.expiry_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
+          if (days <= 7 && days > 0) {
+            setExpiryWarn(`⚠️ আপনার প্যাকেজের মেয়াদ ${days} দিন বাকি!`);
+          } else if (days <= 0) {
+            setExpiryWarn("⚠️ আপনার প্যাকেজের মেয়াদ শেষ! রিনিউ করুন।");
+          }
+        }
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem("wedgo_token");
@@ -32,6 +54,11 @@ export default function Dashboard() {
 
   return (
     <div className="container page-pad">
+      {expiryWarn && (
+        <div className="alert" style={{ background: "rgba(255,152,0,0.2)", border: "1px solid #ff9800", borderRadius: 12, padding: 12, marginBottom: 12, textAlign: "center", fontWeight: 700 }}>
+          {expiryWarn} <Link href="/packages" style={{ color: "#f5a623" }}>রিনিউ করুন</Link>
+        </div>
+      )}
       <div className="row-between" style={{ marginTop: 10 }}>
         <h2>👋 {user.name}</h2>
         <button onClick={logout} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 14px", borderRadius: 10 }}>লগআউট</button>
@@ -86,6 +113,23 @@ export default function Dashboard() {
         <Link href="/profile" className="card stat"><div className="num">👤</div><div className="lbl">প্রোফাইল</div></Link>
         <Link href="/wallet" className="card stat"><div className="num">💰</div><div className="lbl">ওয়ালেট</div></Link>
       </div>
+
+      {recommended.length > 0 && (
+        <div className="card">
+          <h3>💝 আপনার জন্য সাজেস্টেড</h3>
+          <div className="profile-grid">
+            {recommended.slice(0, 6).map((p: any) => (
+              <Link key={p.id} href={`/partners/${p.id}`} className="pcard" style={{ textDecoration: "none", color: "inherit" }}>
+                {p.photo1 ? <img src={p.photo1} /> : <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", fontSize: 40 }}>👤</div>}
+                <div className="info">
+                  <div style={{ fontWeight: 700 }}>{p.name}{p.age ? `, ${p.age}` : ""}</div>
+                  <div className="small" style={{ color: "#4caf50", fontWeight: 700 }}>💕 {p.compat}% ম্যাচ</div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
 
       {user.referral_code && (
         <div className="card center">

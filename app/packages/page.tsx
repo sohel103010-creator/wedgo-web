@@ -10,14 +10,46 @@ export default function Packages() {
   const [payForm, setPayForm] = useState({ method: "bkash", sender_number: "", trx_id: "" });
   const [msg, setMsg] = useState("");
   const [extra, setExtra] = useState<any[]>([]);
+  const [coupon, setCoupon] = useState("");
+  const [discount, setDiscount] = useState(0);
 
   useEffect(() => {
     fetch("/api/packages").then((r) => r.json()).then((d) => {
       setPackages(d.packages || []); setSettings(d.settings || {}); setExtra(d.extra || []);
     });
     const token = localStorage.getItem("wedgo_token");
-    if (token) fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } }).then((r) => r.json()).then(setMe);
+    if (token) fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } }).then((r) => r.json()).then((d) => {
+      setMe(d);
+      // Females don't need packages - redirect
+      if (d?.user?.gender === "female") {
+        window.location.href = "/dashboard";
+      }
+    });
   }, []);
+
+  if (me?.user?.gender === "female") {
+    return (
+      <div className="container page-pad center">
+        <div className="card">
+          <h3>💝 মেয়েদের জন্য সব ফ্রি!</h3>
+          <p className="small">আপনার কোনো প্যাকেজ কেনার দরকার নেই।</p>
+          <Link href="/dashboard" className="btn mt">ড্যাশবোর্ডে যান</Link>
+        </div>
+      </div>
+    );
+  }
+
+  async function applyCoupon() {
+    if (!coupon.trim() || !selected) return;
+    const r = await fetch("/api/coupons", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: coupon, amount: selected.price }),
+    });
+    const d = await r.json();
+    if (d.ok) { setDiscount(d.discount); setMsg(`✅ কুপন প্রয়োগ! ছাড়: ৳${d.discount}`); }
+    else setMsg(d.error || "ব্যর্থ");
+  }
 
   async function submitPayment() {
     if (!me?.user) { window.location.href = "/login"; return; }
@@ -88,6 +120,11 @@ export default function Packages() {
       {selected && (
         <div className="card mt" style={{ border: "2px solid #f5a623" }}>
           <h3 className="center">💳 পেমেন্ট — {selected.name} (৳{selected.price})</h3>
+          {discount > 0 && <p className="center" style={{ color: "#4caf50", fontWeight: 700 }}>ছাড়: ৳{discount} → মোট: ৳{selected.price - discount}</p>}
+          <div className="row">
+            <input placeholder="কুপন কোড (যদি থাকে)" value={coupon} onChange={(e) => setCoupon(e.target.value)} style={{ marginBottom: 0 }} />
+            <button className="btn btn-outline" style={{ marginBottom: 0, width: 100 }} onClick={applyCoupon}>প্রয়োগ</button>
+          </div>
           <div className="row" style={{ marginBottom: 12 }}>
             {["bkash", "nagad", "rocket"].map((m) => (
               <button key={m} onClick={() => setPayForm({ ...payForm, method: m })}

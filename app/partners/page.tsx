@@ -5,7 +5,7 @@ import Link from "next/link";
 export default function Partners() {
   const [partners, setPartners] = useState<any[]>([]);
   const [me, setMe] = useState<any>(null);
-  const [filters, setFilters] = useState({ minAge: "", maxAge: "", district: "", marital: "" });
+  const [filters, setFilters] = useState({ minAge: "", maxAge: "", district: "", marital: "", education: "", occupation: "", religion: "", minHeight: "", maxHeight: "" });
   const [showFilter, setShowFilter] = useState(false);
 
   useEffect(() => {
@@ -23,6 +23,11 @@ export default function Partners() {
     if (filters.maxAge) p.set("maxAge", filters.maxAge);
     if (filters.district) p.set("district", filters.district);
     if (filters.marital) p.set("marital", filters.marital);
+    if (filters.education) p.set("education", filters.education);
+    if (filters.occupation) p.set("occupation", filters.occupation);
+    if (filters.religion) p.set("religion", filters.religion);
+    if (filters.minHeight) p.set("minHeight", filters.minHeight);
+    if (filters.maxHeight) p.set("maxHeight", filters.maxHeight);
     // Show opposite gender by default
     fetch("/api/partners?" + p.toString()).then((r) => r.json()).then((d) => setPartners(d.partners || []));
   }
@@ -62,6 +67,19 @@ export default function Partners() {
             <option value="unmarried">অবিবাহিত</option>
             <option value="divorced">ডিভোর্সি</option>
             <option value="widow">বিধবা/বিপত্নীক</option>
+          </select>
+          <div className="row">
+            <input type="number" placeholder="সর্বনিম্ন উচ্চতা (সেমি)" value={filters.minHeight} onChange={(e) => setFilters({ ...filters, minHeight: e.target.value })} />
+            <input type="number" placeholder="সর্বোচ্চ উচ্চতা (সেমি)" value={filters.maxHeight} onChange={(e) => setFilters({ ...filters, maxHeight: e.target.value })} />
+          </div>
+          <input placeholder="শিক্ষা" value={filters.education} onChange={(e) => setFilters({ ...filters, education: e.target.value })} />
+          <input placeholder="পেশা" value={filters.occupation} onChange={(e) => setFilters({ ...filters, occupation: e.target.value })} />
+          <select value={filters.religion} onChange={(e) => setFilters({ ...filters, religion: e.target.value })}>
+            <option value="">ধর্ম (সব)</option>
+            <option value="islam">ইসলাম</option>
+            <option value="hindu">হিন্দু</option>
+            <option value="buddhist">বৌদ্ধ</option>
+            <option value="christian">খ্রিস্টান</option>
           </select>
           <button className="btn" onClick={loadPartners}>খুঁজুন</button>
         </div>

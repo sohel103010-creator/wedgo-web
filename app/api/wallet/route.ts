@@ -13,7 +13,22 @@ export async function GET(req: NextRequest) {
     [user.id]
   );
 
-  return NextResponse.json({ wallet, withdrawals: withdrawals.rows, earnings: earnings.rows });
+  // Daily and monthly earnings
+  const daily = await queryOne(
+    `SELECT COALESCE(SUM(earned_amount), 0) as total FROM call_history
+     WHERE receiver_id = $1 AND started_at >= CURRENT_DATE`,
+    [user.id]
+  );
+  const monthly = await queryOne(
+    `SELECT COALESCE(SUM(earned_amount), 0) as total FROM call_history
+     WHERE receiver_id = $1 AND started_at >= DATE_TRUNC('month', CURRENT_DATE)`,
+    [user.id]
+  );
+
+  return NextResponse.json({
+    wallet, withdrawals: withdrawals.rows, earnings: earnings.rows,
+    daily_earning: daily?.total || 0, monthly_earning: monthly?.total || 0,
+  });
 }
 
 export async function POST(req: NextRequest) {
