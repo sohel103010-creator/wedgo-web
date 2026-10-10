@@ -99,10 +99,16 @@ export default function Packages() {
       ))}
 
       {/* Extra minutes */}
-      {extra.length > 0 && me?.subscription && (
+      {extra.length > 0 && me?.subscription && (() => {
+        const s = me.subscription;
+        const audioLeft = (s.audio_minutes || 0) - (s.audio_used || 0);
+        const videoLeft = (s.video_minutes || 0) - (s.video_used || 0);
+        const minutesFinished = audioLeft <= 0 && videoLeft <= 0;
+        if (!minutesFinished) return null;
+        return (
         <div className="card mt">
           <h3 className="center">⏱ অতিরিক্ত মিনিট কিনুন</h3>
-          <p className="small center">শুধুমাত্র গোল্ড/প্লাটিনাম সদস্যদের জন্য</p>
+          <p className="small center">আপনার মিনিট শেষ! নতুন মিনিট কিনুন</p>
           {extra.map((e: any, i: number) => (
             <div key={i} className="row-between" style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
               <span>{e.label}</span>
@@ -114,7 +120,8 @@ export default function Packages() {
             </div>
           ))}
         </div>
-      )}
+        );
+      })()}
 
       {/* Payment modal */}
       {selected && (
