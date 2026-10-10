@@ -140,7 +140,16 @@ export default function CallPage() {
   }
 
   function startTimer() {
-    timerRef.current = setInterval(() => setDuration((d) => d + 1), 1000);
+    timerRef.current = setInterval(() => {
+      setDuration((d) => {
+        // Auto-cut at 60 minutes (3600 sec)
+        if (d + 1 >= 3600) {
+          endCall();
+          return d;
+        }
+        return d + 1;
+      });
+    }, 1000);
   }
 
   function cleanup() {
@@ -178,7 +187,16 @@ export default function CallPage() {
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 
   return (
-    <div style={{ height: "100vh", background: "#111", display: "flex", flexDirection: "column", color: "#fff" }}>
+    <div
+      style={{ height: "100vh", background: "#111", display: "flex", flexDirection: "column", color: "#fff", userSelect: "none", WebkitUserSelect: "none" }}
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
+    >
+      {/* Screenshot guard notice */}
+      <div style={{ background: "#f44336", color: "#fff", textAlign: "center", padding: "6px", fontSize: 12, fontWeight: 700 }}>
+        🔒 স্ক্রিনশট ও স্ক্রিনরেকর্ড নিষিদ্ধ
+      </div>
       <div style={{ padding: 16, textAlign: "center" }}>
         <h2>{remoteName || "কল হচ্ছে..."}</h2>
         <p style={{ color: "#aaa" }}>

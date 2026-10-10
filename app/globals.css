@@ -104,3 +104,26 @@ table.admin-tbl th { color: #f5a623; }
 .stat { text-align: center; padding: 16px 8px; }
 .stat .num { font-size: 26px; font-weight: 800; color: #f5a623; }
 .stat .lbl { font-size: 12px; color: rgba(255,255,255,0.65); }
+
+/* Light theme */
+[data-theme="light"] body {
+  background: linear-gradient(135deg, #fff8f0 0%, #ffe8f0 50%, #f0f4ff 100%);
+  color: #222;
+}
+[data-theme="light"] .card {
+  background: rgba(255,255,255,0.95);
+  border-color: rgba(0,0,0,0.08);
+  color: #222;
+}
+[data-theme="light"] input, [data-theme="light"] select, [data-theme="light"] textarea {
+  background: #fff;
+  border-color: rgba(0,0,0,0.12);
+  color: #222;
+}
+[data-theme="light"] .nav {
+  background: rgba(255,255,255,0.97);
+  border-color: rgba(0,0,0,0.08);
+}
+[data-theme="light"] .nav a { color: #555; }
+[data-theme="light"] .small, [data-theme="light"] .subtitle { color: #666; }
+[data-theme="light"] .pcard { background: rgba(255,255,255,0.95); color: #222; }

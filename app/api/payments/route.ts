@@ -14,17 +14,17 @@ export async function POST(req: NextRequest) {
   const user = await getUserFromReq(req);
   if (!user) return NextResponse.json({ error: "লগইন করুন" }, { status: 401 });
 
-  const { package_id, amount, method, sender_number, trx_id } = await req.json();
-  if (!package_id || !method || !sender_number || !trx_id) {
+  const { package_id, extra_label, amount, method, sender_number, trx_id } = await req.json();
+  if ((!package_id && !extra_label) || !method || !sender_number || !trx_id) {
     return NextResponse.json({ error: "সব তথ্য দিন" }, { status: 400 });
   }
 
   const ai_check = aiCheckTrx(trx_id, method);
 
   await query(
-    `INSERT INTO payments (user_id, package_id, amount, method, sender_number, trx_id, ai_check)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)`,
-    [user.id, package_id, amount, method, sender_number.trim(), trx_id.trim().toUpperCase(), ai_check]
+    `INSERT INTO payments (user_id, package_id, extra_label, amount, method, sender_number, trx_id, ai_check)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+    [user.id, package_id || null, extra_label || null, amount, method, sender_number.trim(), trx_id.trim().toUpperCase(), ai_check]
   );
 
   return NextResponse.json({ ok: true, ai_check });

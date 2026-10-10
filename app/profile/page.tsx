@@ -8,6 +8,22 @@ export default function Profile() {
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
+  function setTheme(t: string) {
+    document.documentElement.setAttribute("data-theme", t);
+    localStorage.setItem("wedgo_theme", t);
+  }
+
+  function logout() {
+    localStorage.removeItem("wedgo_token");
+    localStorage.removeItem("wedgo_user");
+    window.location.href = "/login";
+  }
+
+  useEffect(() => {
+    const t = localStorage.getItem("wedgo_theme");
+    if (t) document.documentElement.setAttribute("data-theme", t);
+  }, []);
+
   useEffect(() => {
     const token = localStorage.getItem("wedgo_token");
     if (!token) { window.location.href = "/login"; return; }
@@ -125,6 +141,36 @@ export default function Profile() {
 
         <button className="btn" onClick={save} disabled={saving}>{saving ? "সেভ হচ্ছে..." : "💾 সেভ করুন"}</button>
         {msg && <div className="alert alert-ok">{msg}</div>}
+      </div>
+
+      <div className="card">
+        <h3>🔒 প্রাইভেসি সেটিংস</h3>
+        <div className="row-between">
+          <span>অনলাইন স্ট্যাটাস লুকান</span>
+          <button onClick={() => { set("hide_online", !profile.hide_online); }} className="btn btn-outline" style={{ marginBottom: 0, width: "auto", padding: "8px 16px" }}>
+            {profile.hide_online ? "লুকানো ✅" : "দেখানো"}
+          </button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>🎨 থিম</h3>
+        <div className="row">
+          <button onClick={() => setTheme("dark")} className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }}>🌙 ডার্ক</button>
+          <button onClick={() => setTheme("light")} className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }}>☀️ লাইট</button>
+        </div>
+      </div>
+
+      <div className="card">
+        <h3>🔗 দ্রুত লিংক</h3>
+        <div className="row">
+          <Link href="/favorites" className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }}>⭐ ফেভারিট</Link>
+          <Link href="/visitors" className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }}>👁 ভিজিটর</Link>
+        </div>
+        <div className="row mt">
+          <Link href="/support" className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }}>🆘 সাপোর্ট</Link>
+          <button onClick={logout} className="btn btn-outline" style={{ marginBottom: 0, flex: 1, borderColor: "#f44336", color: "#f44336" }}>🚪 লগআউট</button>
+        </div>
       </div>
 
       <nav className="nav">

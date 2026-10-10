@@ -226,6 +226,27 @@ export default function Admin() {
             </div>
           </div>
           <div className="card">
+            <h3>🖼 সাইট লোগো</h3>
+            {data.settings?.site_logo && <img src={data.settings.site_logo} style={{ width: 80, height: 80, borderRadius: 12, marginBottom: 10 }} />}
+            <input type="file" accept="image/*" onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (!f) return;
+              const reader = new FileReader();
+              reader.onload = () => {
+                const img = new Image();
+                img.onload = () => {
+                  const c = document.createElement("canvas");
+                  c.width = 200; c.height = 200;
+                  c.getContext("2d")!.drawImage(img, 0, 0, 200, 200);
+                  action("update_setting", { key: "site_logo", value: c.toDataURL("image/png") });
+                };
+                img.src = reader.result as string;
+              };
+              reader.readAsDataURL(f);
+            }} />
+            <p className="small">লোগো আপলোড করলে সাইটে দেখাবে</p>
+          </div>
+          <div className="card">
             <h3>⚙️ অন্যান্য সেটিংস</h3>
             <input placeholder="key (যেমন: site_tagline)" value={settingKey} onChange={(e) => setSettingKey(e.target.value)} />
             <input placeholder="value" value={settingVal} onChange={(e) => setSettingVal(e.target.value)} />

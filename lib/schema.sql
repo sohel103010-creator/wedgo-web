@@ -226,7 +226,7 @@ ON CONFLICT (key) DO NOTHING;
 
 -- Default packages
 INSERT INTO packages (name, price, duration_days, msg_days, msg_only, audio_minutes, video_minutes, photo_share, number_share, link_share, profile_views, unlimited_views, unlimited_msg, sort_order) VALUES
-  ('বেসিক', 100, 30, 2, TRUE, 0, 0, FALSE, FALSE, FALSE, 0, FALSE, FALSE, 1),
+  ('বেসিক', 100, 10, 10, TRUE, 0, 0, FALSE, FALSE, FALSE, 0, FALSE, FALSE, 1),
   ('স্ট্যান্ডার্ড', 500, 30, 30, TRUE, 0, 0, FALSE, FALSE, FALSE, 0, FALSE, FALSE, 2),
   ('গোল্ড', 2000, 30, 30, FALSE, 60, 30, TRUE, FALSE, FALSE, 20, FALSE, TRUE, 3),
   ('প্লাটিনাম', 5000, 30, 30, FALSE, 180, 120, TRUE, TRUE, TRUE, 0, TRUE, TRUE, 4)

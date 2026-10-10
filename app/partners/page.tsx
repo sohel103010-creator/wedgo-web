@@ -44,7 +44,10 @@ export default function Partners() {
     <div className="container page-pad">
       <div className="row-between" style={{ marginTop: 10 }}>
         <h2>💑 পার্টনার খুঁজুন</h2>
-        <button onClick={() => setShowFilter(!showFilter)} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 14px", borderRadius: 10 }}>🔍 ফিল্টার</button>
+        <div className="row" style={{ gap: 8 }}>
+          <button onClick={() => loadPartners()} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 14px", borderRadius: 10 }}>🔄</button>
+          <button onClick={() => setShowFilter(!showFilter)} style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 14px", borderRadius: 10 }}>🔍 ফিল্টার</button>
+        </div>
       </div>
 
       {showFilter && (

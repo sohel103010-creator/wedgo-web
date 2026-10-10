@@ -23,10 +23,13 @@ export default function Packages() {
     if (!me?.user) { window.location.href = "/login"; return; }
     setMsg("");
     const token = localStorage.getItem("wedgo_token");
+    const payload: any = { ...payForm, amount: selected.price };
+    if (selected.isExtra) payload.extra_label = selected.label;
+    else payload.package_id = selected.id;
     const r = await fetch("/api/payments", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify({ package_id: selected.id, ...payForm, amount: selected.price }),
+      body: JSON.stringify(payload),
     });
     const d = await r.json();
     if (d.ok) {
@@ -70,7 +73,12 @@ export default function Packages() {
           <p className="small center">শুধুমাত্র গোল্ড/প্লাটিনাম সদস্যদের জন্য</p>
           {extra.map((e: any, i: number) => (
             <div key={i} className="row-between" style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
-              <span>{e.label}</span><strong style={{ color: "#f5a623" }}>৳{e.price}</strong>
+              <span>{e.label}</span>
+              <div className="row" style={{ gap: 8, alignItems: "center" }}>
+                <strong style={{ color: "#f5a623" }}>৳{e.price}</strong>
+                <button className="btn" style={{ marginBottom: 0, padding: "6px 14px", fontSize: 13, width: "auto" }}
+                  onClick={() => setSelected({ ...e, isExtra: true })}>কিনুন</button>
+              </div>
             </div>
           ))}
         </div>

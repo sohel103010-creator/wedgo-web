@@ -88,6 +88,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "ছবি শেয়ার করতে উচ্চতর প্যাকেজ লাগবে" }, { status: 403 });
   }
 
+  if (msg_type === "voice" && !canPhoto) {
+    return NextResponse.json({ error: "ভয়েস মেসেজ পাঠাতে উচ্চতর প্যাকেজ লাগবে" }, { status: 403 });
+  }
+
   const blocked = containsBlocked(content, canNum, canLink);
   if (blocked) {
     // Auto-suspend for 2 days

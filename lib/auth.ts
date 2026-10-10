@@ -19,6 +19,21 @@ export async function ensureSchemaAndSeed(): Promise<void> {
     try { await query(stmt); } catch (e: any) { /* ignore dup errors */ }
   }
   seeded = true;
+  // Run migrations
+  await query("UPDATE packages SET duration_days = 10, msg_days = 10 WHERE price = 100 AND duration_days != 10").catch(() => {});
+  await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS hide_online BOOLEAN DEFAULT FALSE").catch(() => {});
+  await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS theme VARCHAR(10) DEFAULT 'dark'").catch(() => {});
+  await query("ALTER TABLE payments ADD COLUMN IF NOT EXISTS extra_label VARCHAR(100)").catch(() => {});
+}
+
+// One-time migrations for existing databases
+export async function runMigrations(): Promise<void> {
+  await ensureSchemaAndSeed();
+  // 100 Taka package -> 10 days (2026-10-10)
+  await query("UPDATE packages SET duration_days = 10, msg_days = 10 WHERE price = 100 AND duration_days != 10");
+  // Add new columns if not exist
+  await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS hide_online BOOLEAN DEFAULT FALSE");
+  await query("ALTER TABLE profiles ADD COLUMN IF NOT EXISTS theme VARCHAR(10) DEFAULT 'dark'");
 }
 
 export async function hashPassword(pw: string): Promise<string> {

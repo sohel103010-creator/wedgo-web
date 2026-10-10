@@ -23,12 +23,37 @@ export default function PartnerDetail() {
       body: JSON.stringify({ liked_id: params.id }),
     });
     const d = await r.json();
-    if (d.ok) { setLiked(true); alert("❤️ লাভ রিয়াক্ট পাঠানো হয়েছে!"); }
+    if (d.ok) {
+      setLiked(true);
+      if (d.mutual) {
+        alert("💕 ম্যাচ! দুজনেই একে অপরকে পছন্দ করেছেন!");
+      } else {
+        alert("❤️ লাভ রিয়াক্ট পাঠানো হয়েছে!");
+      }
+    }
     else alert(d.error || "ব্যর্থ");
   }
 
   async function startChat() {
     window.location.href = "/chat";
+  }
+
+  async function doAction(action: string, extra: any = {}) {
+    const token = localStorage.getItem("wedgo_token");
+    if (!token) { window.location.href = "/login"; return; }
+    const r = await fetch("/api/social", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ action, target_id: params.id, ...extra }),
+    });
+    const d = await r.json();
+    alert(d.ok ? "✅ সম্পন্ন!" : (d.error || "ব্যর্থ"));
+    if (action === "block") window.location.href = "/partners";
+  }
+
+  async function report() {
+    const reason = prompt("রিপোর্টের কারণ লিখুন:\n1. ভুয়া প্রোফাইল\n2. অশালীন আচরণ\n3. প্রতারণা\n4. হয়রানি\n5. স্প্যাম");
+    if (reason) doAction("report", { reason });
   }
 
   if (!partner) return <div className="container center" style={{ paddingTop: 60 }}>লোড হচ্ছে...</div>;
@@ -50,6 +75,11 @@ export default function PartnerDetail() {
             {liked ? "❤️ পাঠানো হয়েছে" : "❤️ লাভ রিয়াক্ট"}
           </button>
           <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={startChat}>💬 মেসেজ</button>
+        </div>
+        <div className="row mt">
+          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={() => doAction("favorite")}>⭐ ফেভারিট</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={report}>🚩 রিপোর্ট</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13, borderColor: "#f44336", color: "#f44336" }} onClick={() => { if (confirm("ব্লক করবেন?")) doAction("block"); }}>🚫 ব্লক</button>
         </div>
       </div>
 

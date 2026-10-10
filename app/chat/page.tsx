@@ -9,6 +9,10 @@ export default function Chat() {
   const [text, setText] = useState("");
   const [me, setMe] = useState<any>(null);
   const [incoming, setIncoming] = useState<any>(null);
+  const [typing, setTyping] = useState(false);
+  const [recording, setRecording] = useState(false);
+  const mediaRef = useRef<MediaRecorder | null>(null);
+  const audioChunks = useRef<Blob[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -77,17 +81,92 @@ export default function Chat() {
     setActive(c); loadMessages(c.user_id);
   }
 
-  async function send() {
-    if (!text.trim() || !active) return;
+  async function send(msgType = "text", contentOverride?: string) {
+    const content = contentOverride || text.trim();
+    if (!content || !active) return;
     const token = localStorage.getItem("wedgo_token");
     const r = await fetch("/api/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify({ receiver_id: active.user_id, content: text }),
+      body: JSON.stringify({ receiver_id: active.user_id, content, msg_type: msgType }),
     });
     const d = await r.json();
     if (d.ok) { setText(""); loadMessages(active.user_id); }
     else alert(d.error || "পাঠানো যায়নি");
+  }
+
+  async function startRecording() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream);
+      mediaRef.current = mr;
+      audioChunks.current = [];
+      mr.ondataavailable = (e) => audioChunks.current.push(e.data);
+      mr.onstop = async () => {
+        const blob = new Blob(audioChunks.current, { type: "audio/webm" });
+        const reader = new FileReader();
+        reader.onload = () => send("voice", reader.result as string);
+        reader.readAsDataURL(blob);
+        stream.getTracks().forEach((t) => t.stop());
+      };
+      mr.start();
+      setRecording(true);
+    } catch { alert("মাইক্রোফোন এক্সেস দিন"); }
+  }
+
+  function stopRecording() {
+    mediaRef.current?.stop();
+    setRecording(false);
+  }
+
+  function sendPhoto(e: any) {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        const scale = Math.min(1, 800 / img.width);
+        c.width = img.width * scale; c.height = img.height * scale;
+        c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
+        send("photo", c.toDataURL("image/jpeg", 0.7));
+      };
+      img.src = reader.result as string;
+    };
+    reader.readAsDataURL(f);
+  }
+
+  function onTyping() {
+    // Send typing indicator (simple: just show local)
+    setTyping(true);
+    setTimeout(() => setTyping(false), 3000);
+  }
+
+  function renderMessage(m: any) {
+    const isMe = m.sender_id === me?.user?.id;
+    if (m.msg_type === "photo") {
+      return (
+        <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`} style={{ padding: 4 }}>
+          <img src={m.content} style={{ maxWidth: 220, borderRadius: 12 }} />
+          <div className="small" style={{ fontSize: 10, opacity: 0.7, padding: "0 8px 4px" }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+        </div>
+      );
+    }
+    if (m.msg_type === "voice") {
+      return (
+        <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`}>
+          <audio controls src={m.content} style={{ maxWidth: 200 }} />
+          <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+        </div>
+      );
+    }
+    return (
+      <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`}>
+        {m.content}
+        <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+      </div>
+    );
   }
 
   if (active) {
@@ -100,18 +179,21 @@ export default function Chat() {
           <button onClick={() => startCall("video")} style={{ background: "rgba(33,150,243,0.2)", border: "1px solid #2196f3", color: "#fff", padding: "8px 12px", borderRadius: 10, fontSize: 18 }}>📹</button>
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
-          {messages.map((m: any) => (
-            <div key={m.id} className={`chat-bubble ${m.sender_id === me?.user?.id ? "chat-me" : "chat-them"}`}>
-              {m.content}
-              <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
-            </div>
-          ))}
+          {messages.map((m: any) => renderMessage(m))}
+          {typing && <div className="chat-bubble chat-them"><em>টাইপ করছেন...</em></div>}
           <div ref={bottomRef}></div>
         </div>
         <div className="row" style={{ padding: "10px 0" }}>
-          <input placeholder="মেসেজ লিখুন..." value={text} onChange={(e) => setText(e.target.value)}
+          <label style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px 12px", borderRadius: 12, fontSize: 18, cursor: "pointer" }}>
+            📷<input type="file" accept="image/*" onChange={sendPhoto} style={{ display: "none" }} />
+          </label>
+          <button onClick={recording ? stopRecording : startRecording}
+            style={{ background: recording ? "#f44336" : "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "10px 12px", borderRadius: 12, fontSize: 18 }}>
+            {recording ? "⏹" : "🎤"}
+          </button>
+          <input placeholder="মেসেজ লিখুন..." value={text} onChange={(e) => { setText(e.target.value); onTyping(); }}
             onKeyDown={(e) => e.key === "Enter" && send()} style={{ marginBottom: 0 }} />
-          <button className="btn" style={{ width: 70, marginBottom: 0 }} onClick={send}>➤</button>
+          <button className="btn" style={{ width: 70, marginBottom: 0 }} onClick={() => send()}>➤</button>
         </div>
       </div>
     );
