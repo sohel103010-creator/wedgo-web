@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
 
   let sql = `SELECT u.id, u.name, u.gender, p.age, p.height, p.district, p.marital_status,
              p.education, p.occupation, p.religion, p.photo1, p.verified, p.online_status,
-             p.last_active, p.featured, p.completion_pct
+             p.last_active, p.hide_online, p.featured, p.completion_pct
              FROM users u LEFT JOIN profiles p ON u.id = p.user_id
              WHERE u.role = 'member' AND u.status = 'active'`;
   const vals: any[] = [];

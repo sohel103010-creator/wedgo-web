@@ -45,6 +45,18 @@ export default function Partners() {
     window.location.href = "/partners/" + p.id;
   }
 
+  function activeText(p: any) {
+    if (p.hide_online) return null;
+    if (!p.last_active) return null;
+    const mins = Math.floor((Date.now() - new Date(p.last_active).getTime()) / 60000);
+    if (mins < 5) return <span style={{ color: "#4caf50", fontWeight: 700 }}>🟢 অনলাইন</span>;
+    if (mins < 60) return <span className="small">🕐 {Math.floor(mins)} মিনিট আগে</span>;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return <span className="small">🕐 {hours} ঘণ্টা আগে</span>;
+    const days = Math.floor(hours / 24);
+    return <span className="small">🕐 {days} দিন আগে</span>;
+  }
+
   return (
     <div className="container page-pad">
       <div className="row-between" style={{ marginTop: 10 }}>
@@ -107,6 +119,7 @@ export default function Partners() {
                   {p.verified && <span className="badge badge-verified">✓</span>}
                 </div>
                 <div className="small">{p.district || ""} {p.occupation ? `• ${p.occupation}` : ""}</div>
+                <div>{activeText(p)}</div>
                 {blurred && <div className="small" style={{ color: "#f5a623" }}>🔒 দেখতে প্রিমিয়াম কিনুন</div>}
               </div>
             </div>

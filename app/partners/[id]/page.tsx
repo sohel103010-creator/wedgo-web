@@ -106,7 +106,14 @@ export default function PartnerDetail() {
           <div style={{ fontSize: 80, padding: 40 }}>{p.gender === "female" ? "👩" : "👨"}</div>
         )}
         <h2 className="mt">{p.name}{p.age ? `, ${p.age}` : ""} {p.verified && <span className="badge badge-verified">✓ ভেরিফায়েড</span>}</h2>
-        {p.online_status && <span className="badge badge-online">🟢 অনলাইন</span>}
+        {!p.hide_online && p.last_active && (() => {
+          const mins = Math.floor((Date.now() - new Date(p.last_active).getTime()) / 60000);
+          if (mins < 5) return <span className="badge badge-online">🟢 অনলাইন</span>;
+          if (mins < 60) return <div className="small">🕐 {Math.floor(mins)} মিনিট আগে অ্যাক্টিভ ছিল</div>;
+          const h = Math.floor(mins / 60);
+          if (h < 24) return <div className="small">🕐 {h} ঘণ্টা আগে অ্যাক্টিভ ছিল</div>;
+          return <div className="small">🕐 {Math.floor(h / 24)} দিন আগে অ্যাক্টিভ ছিল</div>;
+        })()}
         <div className="row mt">
           <button className="btn" style={{ marginBottom: 0, background: liked ? "#4caf50" : undefined }} onClick={sendLike} disabled={liked}>
             {liked ? "❤️ পাঠানো হয়েছে" : "❤️ লাভ রিয়াক্ট"}

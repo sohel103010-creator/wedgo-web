@@ -109,6 +109,10 @@ export async function getUserFromReq(req: Request) {
   const payload = verifyToken(token);
   if (!payload) return null;
   const user = await queryOne("SELECT * FROM users WHERE id = $1", [payload.id]);
+  if (user) {
+    // Heartbeat: update last_active (throttled to every 2 min)
+    query("UPDATE profiles SET last_active = NOW() WHERE user_id = $1 AND (last_active IS NULL OR last_active < NOW() - INTERVAL '2 minutes')", [user.id]).catch(() => {});
+  }
   return user;
 }
 
