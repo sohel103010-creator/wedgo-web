@@ -79,6 +79,13 @@ export async function ensureSchemaAndSeed(): Promise<void> {
     endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
   )`).catch(() => {});
+  // Message reactions
+  await query(`CREATE TABLE IF NOT EXISTS message_reactions (
+    id SERIAL PRIMARY KEY, message_id INTEGER REFERENCES messages(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    emoji VARCHAR(10) NOT NULL, created_at TIMESTAMP DEFAULT NOW(),
+    UNIQUE(message_id, user_id)
+  )`).catch(() => {});
 }
 
 // One-time migrations for existing databases

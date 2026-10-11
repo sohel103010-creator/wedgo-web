@@ -3,9 +3,11 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLang, Nav } from "@/lib/i18n";
+import { calcCompatibility, compatBreakdown } from "@/lib/compat";
 
 export default function PartnerDetail() {
-  const { t } = useLang();
+  const { t, lang } = useLang();
+  const [showBreakdown, setShowBreakdown] = useState(false);
   const params = useParams();
   const [partner, setPartner] = useState<any>(null);
   const [me, setMe] = useState<any>(null);
@@ -115,6 +117,28 @@ export default function PartnerDetail() {
           const h = Math.floor(mins / 60);
           if (h < 24) return <div className="small">{t("partners.hourAgo", { n: h })}</div>;
           return <div className="small">{t("partners.dayAgo", { n: Math.floor(h / 24) })}</div>;
+        })()}
+        {me?.profile && (() => {
+          const score = calcCompatibility(me.profile, p);
+          const rows = compatBreakdown(me.profile, p);
+          return (
+            <div className="mt center" style={{ width: "100%" }}>
+              <button onClick={() => setShowBreakdown(!showBreakdown)}
+                style={{ background: "rgba(233,30,99,0.15)", border: "1px solid #e91e63", color: "#fff", padding: "8px 16px", borderRadius: 999, fontWeight: 700 }}>
+                💕 {score}% {t("pd.matchWhy")} {showBreakdown ? "▲" : "▼"}
+              </button>
+              {showBreakdown && (
+                <div className="card mt" style={{ textAlign: "left", maxWidth: 340, margin: "12px auto 0" }}>
+                  {rows.map((r) => (
+                    <div key={r.key} className="row-between" style={{ padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>
+                      <span className="small">{r.points > 0 ? "✅" : "▫️"} {lang === "en" ? r.en : r.bn}{r.note ? ` (${r.note})` : ""}</span>
+                      <span className="small" style={{ color: "#4caf50", fontWeight: 700 }}>+{r.points}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
         })()}
         <div className="row mt">
           <button className="btn" style={{ marginBottom: 0, background: liked ? "#4caf50" : undefined }} onClick={sendLike} disabled={liked}>

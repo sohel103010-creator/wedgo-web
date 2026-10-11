@@ -180,6 +180,20 @@ export default function Chat() {
     setTimeout(() => setTyping(false), 3000);
   }
 
+  const [reactTo, setReactTo] = useState<number | null>(null);
+  const REACT_EMOJIS = ["\u2764\uFE0F", "\uD83D\uDC4D", "\uD83D\uDE2E", "\uD83D\uDE02", "\uD83D\uDE22", "\uD83D\uDE4F"];
+
+  async function sendReaction(message_id: number, emoji: string) {
+    const token = localStorage.getItem("wedgo_token");
+    await fetch("/api/chat/react", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
+      body: JSON.stringify({ message_id, emoji }),
+    });
+    setReactTo(null);
+    if (active) loadMessages(active.user_id);
+  }
+
   function renderMessage(m: any) {
     const isMe = m.sender_id === me?.user?.id;
     if (m.deleted && !isMe) return null;
@@ -195,6 +209,25 @@ export default function Chat() {
             <button onClick={() => { if (confirm(t("chat.delAllConfirm"))) deleteMsg(m.id, true); }} style={{ background: "none", border: "none", color: "#f44336", fontSize: 12 }}>🗑👥</button>
           </>
         )}
+        <button onClick={() => setReactTo(reactTo === m.id ? null : m.id)} style={{ background: "none", border: "none", fontSize: 12 }}>😊</button>
+      </div>
+    );
+
+    const reactionBar = m.reactions && m.reactions.length > 0 && (
+      <div style={{ display: "flex", gap: 4, marginTop: 4, fontSize: 12 }}>
+        {m.reactions.map((rx: any, i: number) => (
+          <span key={i} style={{ background: "rgba(255,255,255,0.12)", borderRadius: 999, padding: "2px 8px" }}>
+            {rx.emoji}{rx.c > 1 ? ` ${rx.c}` : ""}
+          </span>
+        ))}
+      </div>
+    );
+
+    const reactPicker = reactTo === m.id && (
+      <div style={{ display: "flex", gap: 10, marginTop: 6 }}>
+        {REACT_EMOJIS.map((e) => (
+          <button key={e} onClick={() => sendReaction(m.id, e)} style={{ background: "none", border: "none", fontSize: 22 }}>{e}</button>
+        ))}
       </div>
     );
 
@@ -204,6 +237,8 @@ export default function Chat() {
           {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
           <img src={m.content} style={{ maxWidth: 220, borderRadius: 12 }} />
           <div className="small" style={{ fontSize: 10, opacity: 0.7, padding: "0 8px 4px" }}>{new Date(m.created_at).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</div>
+          {reactionBar}
+          {reactPicker}
           {actions}
         </div>
       );
@@ -214,6 +249,8 @@ export default function Chat() {
           {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
           <audio controls src={m.content} style={{ maxWidth: 200 }} />
           <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</div>
+          {reactionBar}
+          {reactPicker}
           {actions}
         </div>
       );
@@ -223,6 +260,8 @@ export default function Chat() {
         {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
         {m.deleted ? msgContent : m.content}
         <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</div>
+        {reactionBar}
+        {reactPicker}
         {actions}
       </div>
     );

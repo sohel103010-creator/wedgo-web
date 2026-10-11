@@ -40,7 +40,23 @@ export async function GET(req: NextRequest) {
       [user.id, withUser]
     );
     await query("UPDATE messages SET seen = TRUE WHERE sender_id = $1 AND receiver_id = $2", [withUser, user.id]);
-    return NextResponse.json({ messages: r.rows });
+    // Attach reactions
+    const ids = r.rows.map((m: any) => m.id);
+    let reactions: any[] = [];
+    if (ids.length > 0) {
+      const rr = await query(
+        `SELECT message_id, emoji, COUNT(*)::int AS c FROM message_reactions
+         WHERE message_id = ANY($1) GROUP BY message_id, emoji`,
+        [ids]
+      ).catch(() => ({ rows: [] as any[] }));
+      reactions = (rr as any).rows;
+    }
+    const byMsg: Record<number, { emoji: string; c: number }[]> = {};
+    for (const x of reactions) {
+      (byMsg[x.message_id] = byMsg[x.message_id] || []).push({ emoji: x.emoji, c: x.c });
+    }
+    const messages = r.rows.map((m: any) => ({ ...m, reactions: byMsg[m.id] || [] }));
+    return NextResponse.json({ messages });
   }
 
   // Chat list
