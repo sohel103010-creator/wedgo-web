@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { ensureSchemaAndSeed, hashPassword, signToken, queryOne, query } from "@/lib/auth";
+import { normalizePhone } from "@/lib/phone";
 
 function genReferralCode(): string {
   return "WG" + Math.random().toString(36).substring(2, 8).toUpperCase();
@@ -9,7 +10,8 @@ function genReferralCode(): string {
 export async function POST(req: NextRequest) {
   try {
     await ensureSchemaAndSeed();
-    const { name, mobile, email, password, gender, referral } = await req.json();
+    const { name, mobile: rawMobile, email, password, gender, referral } = await req.json();
+    const mobile = normalizePhone(rawMobile || "");
 
     if (!name || !mobile || !email || !password || !gender) {
       return NextResponse.json({ error: "সব তথ্য দিন" }, { status: 400 });

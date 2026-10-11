@@ -1,17 +1,26 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { ensureSchemaAndSeed, checkPassword, signToken, queryOne } from "@/lib/auth";
+import { normalizePhone, legacyVariants } from "@/lib/phone";
 
 export async function POST(req: NextRequest) {
   try {
     await ensureSchemaAndSeed();
-    const { mobile, password, email } = await req.json();
+    const { mobile: rawMobile, password, email } = await req.json();
 
-    if (!mobile) {
+    if (!rawMobile) {
       return NextResponse.json({ error: "মোবাইল নম্বর দিন" }, { status: 400 });
     }
 
-    const user = await queryOne("SELECT * FROM users WHERE mobile = $1", [mobile.trim()]);
+    const mobile = normalizePhone(rawMobile);
+    let user = await queryOne("SELECT * FROM users WHERE mobile = $1", [mobile]);
+    // Fallback for accounts created before E.164 normalization
+    if (!user) {
+      for (const v of legacyVariants(mobile)) {
+        user = await queryOne("SELECT * FROM users WHERE mobile = $1", [v]);
+        if (user) break;
+      }
+    }
     if (!user) {
       return NextResponse.json({ error: "এই নম্বরে কোনো অ্যাকাউন্ট নেই" }, { status: 404 });
     }

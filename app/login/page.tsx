@@ -1,9 +1,11 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { COUNTRY_CODES, composePhone } from "@/lib/phone";
 
 export default function Login() {
   const [mobile, setMobile] = useState("");
+  const [cc, setCc] = useState("880");
   const [password, setPassword] = useState("");
   const [email, setEmail] = useState("");
   const [mode, setMode] = useState<"password" | "email">("password");
@@ -13,10 +15,11 @@ export default function Login() {
   async function doLogin() {
     setMsg(""); setLoading(true);
     try {
+      const fullMobile = composePhone(cc, mobile);
       const r = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(mode === "password" ? { mobile, password } : { mobile, email }),
+        body: JSON.stringify(mode === "password" ? { mobile: fullMobile, password } : { mobile: fullMobile, email }),
       });
       const d = await r.json();
       if (d.ok) {
@@ -41,7 +44,14 @@ export default function Login() {
           <button className={mode === "email" ? "btn" : "btn btn-outline"} style={{ marginBottom: 0 }} onClick={() => setMode("email")}>জিমেইল দিয়ে</button>
         </div>
 
-        <input placeholder="মোবাইল নম্বর" value={mobile} onChange={(e) => setMobile(e.target.value)} inputMode="numeric" />
+        <div style={{ display: "flex", gap: 8 }}>
+          <select value={cc} onChange={(e) => setCc(e.target.value)} style={{ maxWidth: 128 }}>
+            {COUNTRY_CODES.map((c) => (
+              <option key={c.code} value={c.code}>{c.flag} +{c.code}</option>
+            ))}
+          </select>
+          <input placeholder="মোবাইল নম্বর" value={mobile} onChange={(e) => setMobile(e.target.value)} inputMode="numeric" style={{ flex: 1 }} />
+        </div>
         {mode === "password" ? (
           <input type="password" placeholder="পাসওয়ার্ড" value={password} onChange={(e) => setPassword(e.target.value)} />
         ) : (

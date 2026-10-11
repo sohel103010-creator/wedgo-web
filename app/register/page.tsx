@@ -1,9 +1,10 @@
 "use client";
 import { useState } from "react";
 import Link from "next/link";
+import { COUNTRY_CODES, composePhone } from "@/lib/phone";
 
 export default function Register() {
-  const [form, setForm] = useState({ name: "", mobile: "", email: "", password: "", gender: "male", referral: "" });
+  const [form, setForm] = useState({ name: "", mobile: "", cc: "880", email: "", password: "", gender: "male", referral: "" });
   const [msg, setMsg] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -12,10 +13,16 @@ export default function Register() {
   async function doRegister() {
     setMsg(""); setLoading(true);
     try {
+      const mobile = composePhone(form.cc, form.mobile);
+      if (mobile.replace(/\D/g, "").length < 8) {
+        setMsg("সঠিক মোবাইল নম্বর দিন");
+        setLoading(false);
+        return;
+      }
       const r = await fetch("/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, mobile }),
       });
       const d = await r.json();
       if (d.ok) {
@@ -37,7 +44,14 @@ export default function Register() {
 
       <div className="card">
         <input placeholder="আপনার নাম" value={form.name} onChange={(e) => set("name", e.target.value)} />
-        <input placeholder="মোবাইল নম্বর" value={form.mobile} onChange={(e) => set("mobile", e.target.value)} inputMode="numeric" />
+        <div style={{ display: "flex", gap: 8 }}>
+          <select value={form.cc} onChange={(e) => set("cc", e.target.value)} style={{ maxWidth: 128 }}>
+            {COUNTRY_CODES.map((c) => (
+              <option key={c.code} value={c.code}>{c.flag} +{c.code}</option>
+            ))}
+          </select>
+          <input placeholder="মোবাইল নম্বর" value={form.mobile} onChange={(e) => set("mobile", e.target.value)} inputMode="numeric" style={{ flex: 1 }} />
+        </div>
         <input type="email" placeholder="জিমেইল" value={form.email} onChange={(e) => set("email", e.target.value)} />
         <input type="password" placeholder="পাসওয়ার্ড (কমপক্ষে ৬ অক্ষর)" value={form.password} onChange={(e) => set("password", e.target.value)} />
         <select value={form.gender} onChange={(e) => set("gender", e.target.value)}>

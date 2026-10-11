@@ -1,18 +1,26 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { ensureSchemaAndSeed, hashPassword, query, queryOne } from "@/lib/auth";
+import { normalizePhone, legacyVariants } from "@/lib/phone";
 
 export async function POST(req: NextRequest) {
   try {
     await ensureSchemaAndSeed();
-    const { mobile, email, newPassword } = await req.json();
+    const { mobile: rawMobile, email, newPassword } = await req.json();
+    const mobile = normalizePhone(rawMobile || "");
     if (!mobile || !email || !newPassword) {
       return NextResponse.json({ error: "সব তথ্য দিন" }, { status: 400 });
     }
     if (newPassword.length < 6) {
       return NextResponse.json({ error: "পাসওয়ার্ড কমপক্ষে ৬ অক্ষর" }, { status: 400 });
     }
-    const user = await queryOne("SELECT * FROM users WHERE mobile = $1", [mobile.trim()]);
+    let user = await queryOne("SELECT * FROM users WHERE mobile = $1", [mobile]);
+    if (!user) {
+      for (const v of legacyVariants(mobile)) {
+        user = await queryOne("SELECT * FROM users WHERE mobile = $1", [v]);
+        if (user) break;
+      }
+    }
     if (!user || user.email.toLowerCase() !== email.toLowerCase().trim()) {
       return NextResponse.json({ error: "তথ্য মিলছে না" }, { status: 404 });
     }
