@@ -29,3 +29,8 @@
 2. **Web push notifications**: VAPID keys set as Vercel env on wedgo-web project; dashboard has "🔔 নোটিফিকেশন চালু করুন" button; push sent on new chat message + incoming call (fire-and-forget, dead subs pruned); sw.js handles push + click-to-open.
 3. **Today's top matches**: /api/daily-matches returns top-5 by compatibility, rotated daily; shown on dashboard in pink-bordered card.
 Note: VAPID vars were briefly created on zenera-shop project by mistake — harmless (unused there), correct ones live on wedgo-web.
+
+## 2026-10-12 ~04:50 — 3 more features (commit 15358b9, Vercel READY)
+2. **Online-now push**: heartbeat detects "just came online" (>5min gap) → push to admirers (favorites + likes), 12h dedup via online_pings table, respects hide_online.
+3. **Match breakdown**: partner detail shows "💕 X% ম্যাচ — কেন?" expandable with per-factor points (age/district/religion/education/marital/ghar-jamai).
+4. **Message reactions**: 😊 button per message → emoji picker (6 emojis), toggle on/off, counts shown under bubble; table message_reactions, API /api/chat/react.
