@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useLang, Nav } from "@/lib/i18n";
 
 export default function Packages() {
+  const { t } = useLang();
   const [packages, setPackages] = useState<any[]>([]);
   const [settings, setSettings] = useState<any>({});
   const [me, setMe] = useState<any>(null);
@@ -36,9 +38,9 @@ export default function Packages() {
     return (
       <div className="container page-pad center">
         <div className="card">
-          <h3>💝 স্বাগতম!</h3>
-          <p className="small">আপনার সব ফিচার চালু আছে।</p>
-          <Link href="/dashboard" className="btn mt">ড্যাশবোর্ডে যান</Link>
+          <h3>{t("pkg.welcome")}</h3>
+          <p className="small">{t("pkg.femaleAll")}</p>
+          <Link href="/dashboard" className="btn mt">{t("pkg.goDash")}</Link>
         </div>
       </div>
     );
@@ -58,9 +60,9 @@ export default function Packages() {
     });
     const d = await r.json();
     if (d.ok) {
-      setMsg("✅ পেমেন্ট জমা হয়েছে! অ্যাডমিন অনুমোদনের পর প্যাকেজ চালু হবে।");
+      setMsg(t("pkg.payOk"));
       setSelected(null);
-    } else setMsg(d.error || "ব্যর্থ");
+    } else setMsg(d.error || t("common.fail"));
   }
 
   const payNumbers: any = { bkash: settings.bkash_number, nagad: settings.nagad_number, rocket: settings.rocket_number };
@@ -68,26 +70,26 @@ export default function Packages() {
 
   return (
     <div className="container page-pad">
-      <h2 className="title">💎 প্রিমিয়াম প্যাকেজ</h2>
+      <h2 className="title">{t("pkg.title")}</h2>
 
       {msg && <div className="alert alert-ok">{msg}</div>}
 
       {packages.map((p) => (
         <div key={p.id} className={`card pkg ${p.price === 2000 ? "hot" : ""}`}>
-          {p.price === 2000 && <div className="center"><span className="badge badge-premium">🔥 জনপ্রিয়</span></div>}
+          {p.price === 2000 && <div className="center"><span className="badge badge-premium">{t("pkg.popular")}</span></div>}
           <h3 className="center">{p.name}</h3>
-          <div className="price center">৳{p.price}<span className="small">/মাস</span></div>
+          <div className="price center">৳{p.price}<span className="small">{t("pkg.perMonth")}</span></div>
           <ul className="feat-list">
-            <li className={p.msg_days >= 30 ? "" : "no"}>আনলিমিটেড মেসেজ ({p.msg_days} দিন)</li>
-            {p.max_chat_partners ? <li>{p.max_chat_partners} জনের সাথে চ্যাট</li> : <li>আনলিমিটেড চ্যাট</li>}
-            <li className={p.audio_minutes > 0 ? "" : "no"}>{p.audio_minutes > 0 ? `${p.audio_minutes} মিনিট অডিও কল` : "অডিও কল নেই"}</li>
-            <li className={p.video_minutes > 0 ? "" : "no"}>{p.video_minutes > 0 ? `${p.video_minutes} মিনিট ভিডিও কল` : "ভিডিও কল নেই"}</li>
-            <li className={p.photo_share ? "" : "no"}>ছবি শেয়ার {p.photo_share ? "" : "নেই"}</li>
-            <li className={p.number_share ? "" : "no"}>নম্বর শেয়ার {p.number_share ? "" : "নেই"}</li>
-            <li className={p.link_share ? "" : "no"}>লিংক শেয়ার {p.link_share ? "" : "নেই"}</li>
-            <li className={p.unlimited_views ? "" : "no"}>{p.unlimited_views ? "আনলিমিটেড প্রোফাইল ভিউ" : p.profile_views ? `${p.profile_views}টি প্রোফাইল ভিউ` : "প্রোফাইল ভিউ সীমিত"}</li>
+            <li className={p.msg_days >= 30 ? "" : "no"}>{t("pkg.unlimitedMsg", { n: p.msg_days })}</li>
+            {p.max_chat_partners ? <li>{t("pkg.chatWith", { n: p.max_chat_partners })}</li> : <li>{t("pkg.unlimitedChat")}</li>}
+            <li className={p.audio_minutes > 0 ? "" : "no"}>{p.audio_minutes > 0 ? t("pkg.audioMin", { n: p.audio_minutes }) : t("pkg.noAudio")}</li>
+            <li className={p.video_minutes > 0 ? "" : "no"}>{p.video_minutes > 0 ? t("pkg.videoMin", { n: p.video_minutes }) : t("pkg.noVideo")}</li>
+            <li className={p.photo_share ? "" : "no"}>{t("pkg.photoShare")} {p.photo_share ? "" : t("pkg.none")}</li>
+            <li className={p.number_share ? "" : "no"}>{t("pkg.numberShare")} {p.number_share ? "" : t("pkg.none")}</li>
+            <li className={p.link_share ? "" : "no"}>{t("pkg.linkShare")} {p.link_share ? "" : t("pkg.none")}</li>
+            <li className={p.unlimited_views ? "" : "no"}>{p.unlimited_views ? t("pkg.unlimitedViews") : p.profile_views ? t("pkg.profileViews", { n: p.profile_views }) : t("pkg.limitedViews")}</li>
           </ul>
-          <button className="btn btn-gold" onClick={() => selectPackage(p)}>কিনুন</button>
+          <button className="btn btn-gold" onClick={() => selectPackage(p)}>{t("pkg.buy")}</button>
         </div>
       ))}
 
@@ -102,15 +104,15 @@ export default function Packages() {
         if (!minutesFinished) return null;
         return (
         <div className="card mt">
-          <h3 className="center">⏱ অতিরিক্ত মিনিট কিনুন</h3>
-          <p className="small center">আপনার মিনিট শেষ! নতুন মিনিট কিনুন</p>
+          <h3 className="center">{t("pkg.extraMin")}</h3>
+          <p className="small center">{t("pkg.minFinished")}</p>
           {extra.map((e: any, i: number) => (
             <div key={i} className="row-between" style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
               <span>{e.label}</span>
               <div className="row" style={{ gap: 8, alignItems: "center" }}>
                 <strong style={{ color: "#f5a623" }}>৳{e.price}</strong>
                 <button className="btn" style={{ marginBottom: 0, padding: "6px 14px", fontSize: 13, width: "auto" }}
-                  onClick={() => selectPackage({ ...e, isExtra: true })}>কিনুন</button>
+                  onClick={() => selectPackage({ ...e, isExtra: true })}>{t("pkg.buy")}</button>
               </div>
             </div>
           ))}
@@ -134,23 +136,17 @@ export default function Packages() {
             <strong>{payNames[payForm.method]} সেন্ড মানি নম্বর:</strong><br />
             <span style={{ fontSize: 22, fontWeight: 800, letterSpacing: 1 }}>{payNumbers[payForm.method]}</span>
           </div>
-          <input placeholder="আপনার সেন্ড মানি নম্বর" value={payForm.sender_number} onChange={(e) => setPayForm({ ...payForm, sender_number: e.target.value })} />
-          <input placeholder="ট্রানজেকশন আইডি" value={payForm.trx_id} onChange={(e) => setPayForm({ ...payForm, trx_id: e.target.value })} />
-          <p className="small">⚠️ ভুয়া ট্রানজেকশন দিলে আইডি স্থগিত হবে। AI স্বয়ংক্রিয়ভাবে যাচাই করবে।</p>
+          <input placeholder={t("pkg.senderNum")} value={payForm.sender_number} onChange={(e) => setPayForm({ ...payForm, sender_number: e.target.value })} />
+          <input placeholder={t("pkg.trxId")} value={payForm.trx_id} onChange={(e) => setPayForm({ ...payForm, trx_id: e.target.value })} />
+          <p className="small">{t("pkg.payWarn")}</p>
           <div className="row">
-            <button className="btn" style={{ marginBottom: 0 }} onClick={submitPayment}>জমা দিন</button>
-            <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={() => setSelected(null)}>বাতিল</button>
+            <button className="btn" style={{ marginBottom: 0 }} onClick={submitPayment}>{t("pkg.submit")}</button>
+            <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={() => setSelected(null)}>{t("common.cancel")}</button>
           </div>
         </div>
       )}
 
-      <nav className="nav">
-        <Link href="/dashboard"><span className="ico">🏠</span>হোম</Link>
-        <Link href="/partners"><span className="ico">💑</span>পার্টনার</Link>
-        <Link href="/chat"><span className="ico">💬</span>চ্যাট</Link>
-        <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
-        <Link href="/profile"><span className="ico">👤</span>প্রোফাইল</Link>
-      </nav>
+      <Nav active="" />
     </div>
   );
 }

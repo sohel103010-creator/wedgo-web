@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useLang, Nav } from "@/lib/i18n";
 
 export default function Visitors() {
+  const { t, lang } = useLang();
   const [visitors, setVisitors] = useState<any[]>([]);
 
   useEffect(() => {
@@ -13,9 +15,9 @@ export default function Visitors() {
 
   return (
     <div className="container page-pad">
-      <h2 className="title">👁 প্রোফাইল ভিজিটর</h2>
-      <p className="subtitle">কারা আপনার প্রোফাইল দেখেছে</p>
-      {visitors.length === 0 && <div className="card center"><p className="small">এখনো কেউ দেখেনি</p></div>}
+      <h2 className="title">{t("vis.title")}</h2>
+      <p className="subtitle">{t("vis.sub")}</p>
+      {visitors.length === 0 && <div className="card center"><p className="small">{t("vis.none")}</p></div>}
       {visitors.map((v: any, i: number) => (
         <Link key={i} href={`/partners/${v.id}`} className="card row">
           <div style={{ width: 50, height: 50, borderRadius: "50%", overflow: "hidden", background: "rgba(255,255,255,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 24 }}>
@@ -23,17 +25,11 @@ export default function Visitors() {
           </div>
           <div style={{ flex: 1 }}>
             <strong>{v.name}{v.age ? `, ${v.age}` : ""}</strong>
-            <div className="small">{new Date(v.created_at).toLocaleString("bn-BD")}</div>
+            <div className="small">{new Date(v.created_at).toLocaleString(lang === "en" ? "en-US" : "bn-BD")}</div>
           </div>
         </Link>
       ))}
-      <nav className="nav">
-        <Link href="/dashboard"><span className="ico">🏠</span>হোম</Link>
-        <Link href="/partners"><span className="ico">💑</span>পার্টনার</Link>
-        <Link href="/chat"><span className="ico">💬</span>চ্যাট</Link>
-        <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
-        <Link href="/profile"><span className="ico">👤</span>প্রোফাইল</Link>
-      </nav>
+      <Nav active="" />
     </div>
   );
 }

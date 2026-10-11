@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
+import { useLang } from "@/lib/i18n";
 
 const ICE_SERVERS = {
   iceServers: [
@@ -10,6 +11,7 @@ const ICE_SERVERS = {
 };
 
 export default function CallPage() {
+  const { t } = useLang();
   const params = useParams();
   const searchParams = useSearchParams();
   const callId = params.id as string;
@@ -113,7 +115,7 @@ export default function CallPage() {
 
         if (d.call.status === "ended" || d.call.status === "rejected") {
           clearInterval(poll);
-          endCallUI(d.call.status === "rejected" ? "কল প্রত্যাখ্যান করা হয়েছে" : "কল শেষ");
+          endCallUI(d.call.status === "rejected" ? t("call.rejected") : t("call.ended"));
           return;
         }
 
@@ -139,7 +141,7 @@ export default function CallPage() {
 
       (window as any).__callPoll = poll;
     } catch (e: any) {
-      setError("ক্যামেরা/মাইক্রোফোন এক্সেস দিন: " + e.message);
+      setError(t("call.noCam") + ": " + e.message);
       setStatus("error");
     }
   }
@@ -173,7 +175,7 @@ export default function CallPage() {
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token() },
       body: JSON.stringify({ action: "end" }),
     });
-    endCallUI("কল শেষ হয়েছে");
+    endCallUI(t("call.ended"));
   }
 
   function endCallUI(msg: string) {
@@ -183,13 +185,13 @@ export default function CallPage() {
   }
 
   function toggleMute() {
-    const t = streamRef.current?.getAudioTracks()[0];
-    if (t) { t.enabled = !t.enabled; setMuted(!t.enabled); }
+    const track = streamRef.current?.getAudioTracks()[0];
+    if (track) { track.enabled = !track.enabled; setMuted(!track.enabled); }
   }
 
   function toggleVideo() {
-    const t = streamRef.current?.getVideoTracks()[0];
-    if (t) { t.enabled = !t.enabled; setVideoOff(!t.enabled); }
+    const track = streamRef.current?.getVideoTracks()[0];
+    if (track) { track.enabled = !track.enabled; setVideoOff(!track.enabled); }
   }
 
   const fmt = (s: number) => `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
@@ -207,13 +209,13 @@ export default function CallPage() {
       </div>
       {lowTime && status === "ongoing" && (
         <div style={{ background: "#ff9800", color: "#fff", textAlign: "center", padding: "6px", fontSize: 13, fontWeight: 700 }}>
-          ⏳ ১ মিনিট বাকি — মিনিট শেষ হলে কল কেটে যাবে
+          {t("call.lowMin")}
         </div>
       )}
       <div style={{ padding: 16, textAlign: "center" }}>
-        <h2>{remoteName || "কল হচ্ছে..."}</h2>
+        <h2>{remoteName || t("call.calling")}</h2>
         <p style={{ color: "#aaa" }}>
-          {status === "ringing" ? "📞 রিং হচ্ছে..." : status === "ongoing" ? `⏱ ${fmt(duration)}` : status}
+          {status === "ringing" ? t("call.ringing") : status === "ongoing" ? `⏱ ${fmt(duration)}` : status}
         </p>
         {error && <div className="alert alert-err">{error}</div>}
       </div>

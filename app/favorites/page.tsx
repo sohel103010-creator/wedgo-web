@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useLang, Nav } from "@/lib/i18n";
 
 export default function Favorites() {
+  const { t } = useLang();
   const [favs, setFavs] = useState<any[]>([]);
 
   useEffect(() => {
@@ -23,8 +25,8 @@ export default function Favorites() {
 
   return (
     <div className="container page-pad">
-      <h2 className="title">⭐ ফেভারিট লিস্ট</h2>
-      {favs.length === 0 && <div className="card center"><p className="small">কোনো ফেভারিট নেই</p></div>}
+      <h2 className="title">{t("fav.title")}</h2>
+      {favs.length === 0 && <div className="card center"><p className="small">{t("fav.none")}</p></div>}
       <div className="profile-grid">
         {favs.map((p) => (
           <div key={p.id} className="pcard">
@@ -32,20 +34,14 @@ export default function Favorites() {
             <div className="info">
               <div style={{ fontWeight: 700 }}>{p.name}{p.age ? `, ${p.age}` : ""}</div>
               <div className="row-between">
-                <Link href={`/partners/${p.id}`} className="small" style={{ color: "#f5a623" }}>দেখুন</Link>
+                <Link href={`/partners/${p.id}`} className="small" style={{ color: "#f5a623" }}>{t("fav.view")}</Link>
                 <button onClick={() => remove(p.id)} style={{ background: "none", border: "none", color: "#f44336" }}>🗑</button>
               </div>
             </div>
           </div>
         ))}
       </div>
-      <nav className="nav">
-        <Link href="/dashboard"><span className="ico">🏠</span>হোম</Link>
-        <Link href="/partners"><span className="ico">💑</span>পার্টনার</Link>
-        <Link href="/chat"><span className="ico">💬</span>চ্যাট</Link>
-        <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
-        <Link href="/profile"><span className="ico">👤</span>প্রোফাইল</Link>
-      </nav>
+      <Nav active="" />
     </div>
   );
 }

@@ -2,8 +2,10 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useLang, Nav } from "@/lib/i18n";
 
 export default function PartnerDetail() {
+  const { t } = useLang();
   const params = useParams();
   const [partner, setPartner] = useState<any>(null);
   const [me, setMe] = useState<any>(null);
@@ -26,12 +28,12 @@ export default function PartnerDetail() {
     if (d.ok) {
       setLiked(true);
       if (d.mutual) {
-        alert("💕 ম্যাচ! দুজনেই একে অপরকে পছন্দ করেছেন!");
+        alert(t("pd.match"));
       } else {
-        alert("❤️ লাভ রিয়াক্ট পাঠানো হয়েছে!");
+        alert(t("pd.likeSent"));
       }
     }
-    else alert(d.error || "ব্যর্থ");
+    else alert(d.error || t("common.fail"));
   }
 
   const [chatStatus, setChatStatus] = useState("");
@@ -46,8 +48,8 @@ export default function PartnerDetail() {
       body: JSON.stringify({ receiver_id: params.id, action: "send" }),
     });
     const d = await r.json();
-    if (d.ok) { setChatStatus("pending"); alert("💌 চ্যাট রিকোয়েস্ট পাঠানো হয়েছে!"); }
-    else alert(d.error || "ব্যর্থ");
+    if (d.ok) { setChatStatus("pending"); alert(t("pd.reqSentAlert")); }
+    else alert(d.error || t("common.fail"));
   }
 
   useEffect(() => {
@@ -63,7 +65,7 @@ export default function PartnerDetail() {
   }, []);
 
   async function sendGift(giftId: number) {
-    if (!confirm("গিফট পাঠাবেন?")) return;
+    if (!confirm(t("pd.sendGift"))) return;
     const token = localStorage.getItem("wedgo_token");
     const r = await fetch("/api/gifts", {
       method: "POST",
@@ -71,7 +73,7 @@ export default function PartnerDetail() {
       body: JSON.stringify({ receiver_id: params.id, gift_id: giftId }),
     });
     const d = await r.json();
-    alert(d.ok ? "🎁 গিফট পাঠানো হয়েছে!" : (d.error || "ব্যর্থ"));
+    alert(d.ok ? t("pd.giftSent") : (d.error || "ব্যর্থ"));
     setShowGifts(false);
   }
 
@@ -84,57 +86,57 @@ export default function PartnerDetail() {
       body: JSON.stringify({ action, target_id: params.id, ...extra }),
     });
     const d = await r.json();
-    alert(d.ok ? "✅ সম্পন্ন!" : (d.error || "ব্যর্থ"));
+    alert(d.ok ? t("pd.done") : (d.error || t("common.fail")));
     if (action === "block") window.location.href = "/partners";
   }
 
   async function report() {
-    const reason = prompt("রিপোর্টের কারণ লিখুন:\n1. ভুয়া প্রোফাইল\n2. অশালীন আচরণ\n3. প্রতারণা\n4. হয়রানি\n5. স্প্যাম");
+    const reason = prompt(t("pd.reportPrompt"));
     if (reason) doAction("report", { reason });
   }
 
-  if (!partner) return <div className="container center" style={{ paddingTop: 60 }}>লোড হচ্ছে...</div>;
+  if (!partner) return <div className="container center" style={{ paddingTop: 60 }}>{t("common.loading")}</div>;
 
   const p = partner;
   return (
     <div className="container page-pad">
-      <Link href="/partners" className="small">← ফিরুন</Link>
+      <Link href="/partners" className="small">{t("common.back")}</Link>
       <div className="card mt center">
         {p.photo1 ? (
           <img src={p.photo1} style={{ width: "100%", maxHeight: 400, objectFit: "cover", borderRadius: 16 }} />
         ) : (
           <div style={{ fontSize: 80, padding: 40 }}>{p.gender === "female" ? "👩" : "👨"}</div>
         )}
-        <h2 className="mt">{p.name}{p.age ? `, ${p.age}` : ""} {p.verified && <span className="badge badge-verified">✓ ভেরিফায়েড</span>}</h2>
+        <h2 className="mt">{p.name}{p.age ? `, ${p.age}` : ""} {p.verified && <span className="badge badge-verified">{t("pd.verified")}</span>}</h2>
         {!p.hide_online && p.last_active && (() => {
           const mins = Math.floor((Date.now() - new Date(p.last_active).getTime()) / 60000);
-          if (mins < 5) return <span className="badge badge-online">🟢 অনলাইন</span>;
-          if (mins < 60) return <div className="small">🕐 {Math.floor(mins)} মিনিট আগে অ্যাক্টিভ ছিল</div>;
+          if (mins < 5) return <span className="badge badge-online">{t("partners.online")}</span>;
+          if (mins < 60) return <div className="small">{t("partners.minAgo", { n: Math.floor(mins) })}</div>;
           const h = Math.floor(mins / 60);
-          if (h < 24) return <div className="small">🕐 {h} ঘণ্টা আগে অ্যাক্টিভ ছিল</div>;
-          return <div className="small">🕐 {Math.floor(h / 24)} দিন আগে অ্যাক্টিভ ছিল</div>;
+          if (h < 24) return <div className="small">{t("partners.hourAgo", { n: h })}</div>;
+          return <div className="small">{t("partners.dayAgo", { n: Math.floor(h / 24) })}</div>;
         })()}
         <div className="row mt">
           <button className="btn" style={{ marginBottom: 0, background: liked ? "#4caf50" : undefined }} onClick={sendLike} disabled={liked}>
-            {liked ? "❤️ পাঠানো হয়েছে" : "❤️ লাভ রিয়াক্ট"}
+            {liked ? t("pd.likedState") : t("pd.like")}
           </button>
-          <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={() => window.location.href = "/chat"}>💬 চ্যাট</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={() => window.location.href = "/chat"}>{t("pd.chat")}</button>
           {chatStatus === "" && (
-            <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={sendChatRequest}>💌 রিকোয়েস্ট</button>
+            <button className="btn btn-outline" style={{ marginBottom: 0 }} onClick={sendChatRequest}>{t("pd.chatReq")}</button>
           )}
-          {chatStatus === "pending" && <span className="small" style={{ color: "#f5a623" }}>⏳ রিকোয়েস্ট পাঠানো হয়েছে</span>}
-          {chatStatus === "accepted" && <span className="small" style={{ color: "#4caf50" }}>✅ গৃহীত হয়েছে</span>}
+          {chatStatus === "pending" && <span className="small" style={{ color: "#f5a623" }}>{t("pd.reqSent")}</span>}
+          {chatStatus === "accepted" && <span className="small" style={{ color: "#4caf50" }}>{t("pd.accepted")}</span>}
         </div>
         <div className="row mt">
-          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={() => doAction("favorite")}>⭐ ফেভারিট</button>
-          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={() => setShowGifts(!showGifts)}>🎁 গিফট</button>
-          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={report}>🚩 রিপোর্ট</button>
-          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13, borderColor: "#f44336", color: "#f44336" }} onClick={() => { if (confirm("ব্লক করবেন?")) doAction("block"); }}>🚫 ব্লক</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={() => doAction("favorite")}>{t("pd.fav")}</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={() => setShowGifts(!showGifts)}>{t("pd.gift")}</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13 }} onClick={report}>{t("pd.report")}</button>
+          <button className="btn btn-outline" style={{ marginBottom: 0, fontSize: 13, borderColor: "#f44336", color: "#f44336" }} onClick={() => { if (confirm(t("pd.blockConfirm"))) doAction("block"); }}>{t("pd.block")}</button>
         </div>
 
         {showGifts && (
           <div className="card" style={{ border: "2px solid #e91e63" }}>
-            <h3>🎁 গিফট পাঠান</h3>
+            <h3>{t("pd.sendGift")}</h3>
             <div className="row">
               {gifts.map((g: any) => (
                 <button key={g.id} onClick={() => sendGift(g.id)}
@@ -152,28 +154,22 @@ export default function PartnerDetail() {
       <div className="card">
         <h3>📋 বিস্তারিত</h3>
         <table className="admin-tbl">
-          <tr><td>বয়স</td><td>{p.age || "—"}</td></tr>
-          <tr><td>উচ্চতা</td><td>{p.height || "—"}</td></tr>
-          <tr><td>ঠিকানা</td><td>{p.address || "—"}</td></tr>
-          <tr><td>জেলা</td><td>{p.district || "—"}</td></tr>
-          <tr><td>রক্তের গ্রুপ</td><td>{p.blood_group || "—"}</td></tr>
-          <tr><td>বৈবাহিক অবস্থা</td><td>{p.marital_status === "unmarried" ? "অবিবাহিত" : p.marital_status === "divorced" ? "ডিভোর্সি" : p.marital_status === "widow" ? "বিধবা/বিপত্নীক" : "—"}</td></tr>
-          <tr><td>শিক্ষা</td><td>{p.education || "—"}</td></tr>
-          <tr><td>পেশা</td><td>{p.occupation || "—"}</td></tr>
-          <tr><td>ধর্ম</td><td>{p.religion || "—"}</td></tr>
-          <tr><td>ঘর জামাই</td><td>{p.ghar_jamai || "—"}</td></tr>
+          <tr><td>{t("pd.age")}</td><td>{p.age || "—"}</td></tr>
+          <tr><td>{t("pd.height")}</td><td>{p.height || "—"}</td></tr>
+          <tr><td>{t("pd.address")}</td><td>{p.address || "—"}</td></tr>
+          <tr><td>{t("pd.district")}</td><td>{p.district || "—"}</td></tr>
+          <tr><td>{t("pd.blood")}</td><td>{p.blood_group || "—"}</td></tr>
+          <tr><td>{t("pd.marital")}</td><td>{p.marital_status === "unmarried" ? t("partners.unmarried") : p.marital_status === "divorced" ? t("partners.divorced") : p.marital_status === "widow" ? t("partners.widow") : "—"}</td></tr>
+          <tr><td>{t("pd.education")}</td><td>{p.education || "—"}</td></tr>
+          <tr><td>{t("pd.occupation")}</td><td>{p.occupation || "—"}</td></tr>
+          <tr><td>{t("pd.religion")}</td><td>{p.religion || "—"}</td></tr>
+          <tr><td>{t("pd.gharjamai")}</td><td>{p.ghar_jamai || "—"}</td></tr>
         </table>
-        {p.bio && <><h3 className="mt">📝 নিজের সম্পর্কে</h3><p className="small" style={{ lineHeight: 1.8 }}>{p.bio}</p></>}
-        {p.photo2 && <><h3 className="mt">📷 মিডিয়া</h3><img src={p.photo2} style={{ width: "100%", borderRadius: 12 }} /></>}
+        {p.bio && <><h3 className="mt">{t("pd.about")}</h3><p className="small" style={{ lineHeight: 1.8 }}>{p.bio}</p></>}
+        {p.photo2 && <><h3 className="mt">{t("pd.media")}</h3><img src={p.photo2} style={{ width: "100%", borderRadius: 12 }} /></>}
       </div>
 
-      <nav className="nav">
-        <Link href="/dashboard"><span className="ico">🏠</span>হোম</Link>
-        <Link href="/partners" className="active"><span className="ico">💑</span>পার্টনার</Link>
-        <Link href="/chat"><span className="ico">💬</span>চ্যাট</Link>
-        <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
-        <Link href="/profile"><span className="ico">👤</span>প্রোফাইল</Link>
-      </nav>
+      <Nav active="partners" />
     </div>
   );
 }

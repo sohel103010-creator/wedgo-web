@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import Link from "next/link";
+import { useLang, Nav } from "@/lib/i18n";
 
 const FAQS = [
   { q: "রেজিস্ট্রেশন কি ফ্রি?", a: "হ্যাঁ, রেজিস্ট্রেশন সম্পূর্ণ ফ্রি।" },
@@ -11,6 +11,7 @@ const FAQS = [
 ];
 
 export default function Support() {
+  const { t } = useLang();
   const [open, setOpen] = useState(-1);
   const [ticket, setTicket] = useState({ subject: "", message: "" });
   const [msg, setMsg] = useState("");
@@ -23,16 +24,16 @@ export default function Support() {
       body: JSON.stringify(ticket),
     });
     const d = await r.json();
-    setMsg(d.ok ? "✅ টিকিট জমা হয়েছে!" : (d.error || "ব্যর্থ"));
+    setMsg(d.ok ? t("sup.ticketOk") : (d.error || "ব্যর্থ"));
     if (d.ok) setTicket({ subject: "", message: "" });
   }
 
   return (
     <div className="container page-pad">
-      <h2 className="title">🆘 সাপোর্ট সেন্টার</h2>
+      <h2 className="title">{t("sup.title")}</h2>
 
       <div className="card">
-        <h3>❓ সাধারণ প্রশ্ন</h3>
+        <h3>{t("sup.faq")}</h3>
         {FAQS.map((f, i) => (
           <div key={i} style={{ borderBottom: "1px solid rgba(255,255,255,0.1)", padding: "10px 0" }}>
             <div onClick={() => setOpen(open === i ? -1 : i)} style={{ cursor: "pointer", fontWeight: 700 }}>
@@ -44,10 +45,10 @@ export default function Support() {
       </div>
 
       <div className="card">
-        <h3>🎫 সাপোর্ট টিকিট</h3>
-        <input placeholder="বিষয়" value={ticket.subject} onChange={(e) => setTicket({ ...ticket, subject: e.target.value })} />
-        <textarea placeholder="আপনার সমস্যা লিখুন..." value={ticket.message} onChange={(e) => setTicket({ ...ticket, message: e.target.value })} rows={4} />
-        <button className="btn" onClick={submitTicket}>জমা দিন</button>
+        <h3>{t("sup.ticket")}</h3>
+        <input placeholder={t("sup.subject")} value={ticket.subject} onChange={(e) => setTicket({ ...ticket, subject: e.target.value })} />
+        <textarea placeholder={t("sup.writeIssue")} value={ticket.message} onChange={(e) => setTicket({ ...ticket, message: e.target.value })} rows={4} />
+        <button className="btn" onClick={submitTicket}>{t("sup.submit")}</button>
         {msg && <div className="alert alert-ok">{msg}</div>}
       </div>
 
@@ -55,13 +56,7 @@ export default function Support() {
         <a href="https://www.facebook.com/profile.php?id=61594689478770" target="_blank" style={{ color: "#e91e63" }}>📘 Facebook Page-এ মেসেজ করুন</a>
       </div>
 
-      <nav className="nav">
-        <Link href="/dashboard"><span className="ico">🏠</span>হোম</Link>
-        <Link href="/partners"><span className="ico">💑</span>পার্টনার</Link>
-        <Link href="/chat"><span className="ico">💬</span>চ্যাট</Link>
-        <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
-        <Link href="/profile"><span className="ico">👤</span>প্রোফাইল</Link>
-      </nav>
+      <Nav active="" />
     </div>
   );
 }

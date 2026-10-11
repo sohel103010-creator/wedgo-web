@@ -73,6 +73,12 @@ export async function ensureSchemaAndSeed(): Promise<void> {
     id SERIAL PRIMARY KEY, couple_names VARCHAR(200), story TEXT, photo TEXT,
     active BOOLEAN DEFAULT TRUE, created_at TIMESTAMP DEFAULT NOW()
   )`).catch(() => {});
+  // Web push subscriptions
+  await query(`CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id SERIAL PRIMARY KEY, user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    endpoint TEXT NOT NULL UNIQUE, p256dh TEXT NOT NULL, auth TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT NOW()
+  )`).catch(() => {});
 }
 
 // One-time migrations for existing databases

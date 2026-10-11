@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useLang, LangToggle } from "@/lib/i18n";
 
 const FAKE_PROFILES = [
   { name: "রিয়া", age: 24, district: "ঢাকা", emoji: "👩" },
@@ -12,6 +13,7 @@ const FAKE_PROFILES = [
 ];
 
 export default function Home() {
+  const { t } = useLang();
   const [showAdmin, setShowAdmin] = useState(false);
   const [adminEmail, setAdminEmail] = useState("");
   const [msg, setMsg] = useState("");
@@ -44,49 +46,46 @@ export default function Home() {
   return (
     <div className="container">
       <div className="row-between" style={{ marginTop: 8 }}>
-        <div style={{ width: 60 }}></div>
+        <div style={{ width: 60 }}><LangToggle /></div>
         <div></div>
         <button
           onClick={() => setShowAdmin(!showAdmin)}
           style={{ background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)", color: "#fff", padding: "8px 14px", borderRadius: 10, fontSize: 12 }}
-        >
-          🔐 অ্যাডমিন
-        </button>
+        >{t("landing.admin")}</button>
       </div>
 
       {showAdmin && (
         <div className="card mt">
-          <h3 className="center">অ্যাডমিন লগইন</h3>
-          <p className="small center" style={{ marginBottom: 12 }}>শুধুমাত্র অনুমোদিত জিমেইল দিয়ে লগইন</p>
+          <h3 className="center">{t("landing.adminLogin")}</h3>
+          <p className="small center" style={{ marginBottom: 12 }}>{t("landing.adminOnly")}</p>
           <input
             type="email"
-            placeholder="অ্যাডমিন জিমেইল"
+            placeholder={t("landing.adminEmailPh")}
             value={adminEmail}
             onChange={(e) => setAdminEmail(e.target.value)}
           />
-          <button className="btn" onClick={adminLogin}>লগইন</button>
+          <button className="btn" onClick={adminLogin}>{t("landing.adminLogin")}</button>
           {msg && <div className="alert alert-err">{msg}</div>}
         </div>
       )}
 
       <div className="logo">💒 WedGo</div>
       <p className="tagline">
-        সারা বিশ্বে একমাত্র ম্যাট্রিমনি যেখানে শর্ট টাইম রিলেশন করে,
-        অডিও কল, ভিডিও কলে কথা বলে জেনে বুঝে তারপর বিয়ে করা যায়
+        {t("landing.tagline")}
       </p>
 
       <div className="row" style={{ marginBottom: 20 }}>
-        <Link href="/login" className="btn center" style={{ marginBottom: 0 }}>লগইন</Link>
-        <Link href="/register" className="btn btn-outline center" style={{ marginBottom: 0 }}>রেজিস্ট্রেশন</Link>
+        <Link href="/login" className="btn center" style={{ marginBottom: 0 }}>{t("landing.login")}</Link>
+        <Link href="/register" className="btn btn-outline center" style={{ marginBottom: 0 }}>{t("landing.register")}</Link>
       </div>
 
-      <h3 className="center" style={{ marginBottom: 14 }}>💑 আমাদের সদস্যরা</h3>
+      <h3 className="center" style={{ marginBottom: 14 }}>{t("landing.members")}</h3>
       <div className="profile-grid">
         {FAKE_PROFILES.map((p, i) => (
           <div
             key={i}
             className="pcard blurred"
-            onClick={() => alert("এই প্রোফাইলটি দেখতে রেজিস্ট্রেশন করুন")}
+            onClick={() => alert(t("landing.registerToView"))}
             style={{ cursor: "pointer" }}
           >
             <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 64, filter: "blur(8px)" }}>
@@ -95,18 +94,18 @@ export default function Home() {
             <div className="info">
               <div style={{ fontWeight: 700 }}>{p.name}, {p.age}</div>
               <div className="small">{p.district}</div>
-              <div className="small" style={{ color: "#f5a623" }}>👁 দেখতে রেজিস্ট্রেশন করুন</div>
+              <div className="small" style={{ color: "#f5a623" }}>{t("landing.tapToView")}</div>
             </div>
           </div>
         ))}
       </div>
 
       <div className="card mt center">
-        <h3>✨ কেন WedGo?</h3>
+        <h3>{t("landing.why")}</h3>
         <div className="small" style={{ lineHeight: 2, marginTop: 8 }}>
-          🎥 ভিডিও কলে কথা বলে সিদ্ধান্ত নিন<br />
-          🔒 নিরাপদ ও ভেরিফায়েড প্রোফাইল<br />
-          📞 HD অডিও/ভিডিও কল সিস্টেম
+          {t("landing.why1")}<br />
+          {t("landing.why2")}<br />
+          {t("landing.why3")}
         </div>
       </div>
 

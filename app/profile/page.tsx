@@ -1,16 +1,18 @@
 "use client";
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useLang, Nav } from "@/lib/i18n";
 
 export default function Profile() {
+  const { t } = useLang();
   const [profile, setProfile] = useState<any>({});
   const [user, setUser] = useState<any>(null);
   const [msg, setMsg] = useState("");
   const [saving, setSaving] = useState(false);
 
-  function setTheme(t: string) {
-    document.documentElement.setAttribute("data-theme", t);
-    localStorage.setItem("wedgo_theme", t);
+  function setTheme(theme: string) {
+    document.documentElement.setAttribute("data-theme", theme);
+    localStorage.setItem("wedgo_theme", theme);
   }
 
   function logout() {
@@ -28,7 +30,7 @@ export default function Profile() {
       body: JSON.stringify({ hours }),
     });
     const d = await r.json();
-    alert(d.ok ? "🚀 বুস্ট চালু হয়েছে!" : (d.error || "ব্যর্থ"));
+    alert(d.ok ? t("profile.boostOn") : (d.error || t("common.fail")));
   }
 
   useEffect(() => {
@@ -55,7 +57,7 @@ export default function Profile() {
       body: JSON.stringify(profile),
     });
     const d = await r.json();
-    setMsg(d.ok ? `✅ সেভ হয়েছে! প্রোফাইল ${d.completion_pct}% সম্পূর্ণ` : (d.error || "ব্যর্থ"));
+    setMsg(d.ok ? `✅ সেভ হয়েছে! প্রোফাইল ${d.completion_pct}% সম্পূর্ণ` : (d.error || t("common.fail")));
     setSaving(false);
   }
 
@@ -81,7 +83,7 @@ export default function Profile() {
 
   return (
     <div className="container page-pad">
-      <h2 className="title">👤 প্রোফাইল আপডেট</h2>
+      <h2 className="title">{t("profile.title")}</h2>
 
       <div className="card">
         <div className="row-between"><strong>সম্পূর্ণ: {profile.completion_pct || 0}%</strong></div>
@@ -89,78 +91,78 @@ export default function Profile() {
       </div>
 
       <div className="card">
-        <label className="small">বয়স</label>
-        <input type="number" placeholder="বয়স" value={profile.age || ""} onChange={(e) => set("age", parseInt(e.target.value))} />
+        <label className="small">{t("profile.age")}</label>
+        <input type="number" placeholder={t("profile.age")} value={profile.age || ""} onChange={(e) => set("age", parseInt(e.target.value))} />
 
-        <label className="small">উচ্চতা</label>
-        <input placeholder="যেমন: ৫ ফুট ৬ ইঞ্চি" value={profile.height || ""} onChange={(e) => set("height", e.target.value)} />
+        <label className="small">{t("profile.height")}</label>
+        <input placeholder={t("profile.heightPh")} value={profile.height || ""} onChange={(e) => set("height", e.target.value)} />
 
-        <label className="small">ঠিকানা</label>
-        <input placeholder="বর্তমান ঠিকানা" value={profile.address || ""} onChange={(e) => set("address", e.target.value)} />
+        <label className="small">{t("pd.address")}</label>
+        <input placeholder={t("profile.address")} value={profile.address || ""} onChange={(e) => set("address", e.target.value)} />
 
-        <label className="small">জেলা</label>
-        <input placeholder="জেলা" value={profile.district || ""} onChange={(e) => set("district", e.target.value)} />
+        <label className="small">{t("profile.district")}</label>
+        <input placeholder={t("profile.district")} value={profile.district || ""} onChange={(e) => set("district", e.target.value)} />
 
-        <label className="small">রক্তের গ্রুপ</label>
+        <label className="small">{t("profile.blood")}</label>
         <select value={profile.blood_group || ""} onChange={(e) => set("blood_group", e.target.value)}>
-          <option value="">সিলেক্ট করুন</option>
+          <option value="">{t("profile.select")}</option>
           {["A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-"].map((b) => <option key={b} value={b}>{b}</option>)}
         </select>
 
-        <label className="small">বৈবাহিক অবস্থা</label>
+        <label className="small">{t("profile.marital")}</label>
         <select value={profile.marital_status || ""} onChange={(e) => set("marital_status", e.target.value)}>
-          <option value="">সিলেক্ট করুন</option>
-          <option value="unmarried">অবিবাহিত</option>
-          <option value="divorced">ডিভোর্সি</option>
-          <option value="widow">বিধবা/বিপত্নীক</option>
+          <option value="">{t("profile.select")}</option>
+          <option value="unmarried">{t("partners.unmarried")}</option>
+          <option value="divorced">{t("partners.divorced")}</option>
+          <option value="widow">{t("partners.widow")}</option>
         </select>
 
-        <label className="small">{isFemale ? "ঘর জামাই" : "ঘর জামাই অপশন"}</label>
+        <label className="small">{isFemale ? t("pd.gharjamai") : t("profile.gharjamai")}</label>
         <select value={profile.ghar_jamai || ""} onChange={(e) => set("ghar_jamai", e.target.value)}>
-          <option value="">সিলেক্ট করুন</option>
+          <option value="">{t("profile.select")}</option>
           {isFemale ? (
-            <><option value="needed">ঘর জামাই লাগবে</option><option value="not_needed">ঘর জামাই লাগবে না</option></>
+            <><option value="needed">{t("profile.gjNeed")}</option><option value="not_needed">{t("profile.gjNeedNo")}</option></>
           ) : (
-            <><option value="willing">ঘর জামাই থাকতে চাই</option><option value="not_willing">ঘর জামাই থাকতে চাই না</option></>
+            <><option value="willing">{t("profile.gjYes")}</option><option value="not_willing">{t("profile.gjNo")}</option></>
           )}
         </select>
 
-        <label className="small">শিক্ষা</label>
-        <input placeholder="শিক্ষাগত যোগ্যতা" value={profile.education || ""} onChange={(e) => set("education", e.target.value)} />
+        <label className="small">{t("profile.education")}</label>
+        <input placeholder={t("profile.education")} value={profile.education || ""} onChange={(e) => set("education", e.target.value)} />
 
-        <label className="small">পেশা</label>
-        <input placeholder="পেশা" value={profile.occupation || ""} onChange={(e) => set("occupation", e.target.value)} />
+        <label className="small">{t("profile.occupation")}</label>
+        <input placeholder={t("profile.occupation")} value={profile.occupation || ""} onChange={(e) => set("occupation", e.target.value)} />
 
-        <label className="small">ধর্ম</label>
+        <label className="small">{t("profile.religion")}</label>
         <select value={profile.religion || ""} onChange={(e) => set("religion", e.target.value)}>
-          <option value="">সিলেক্ট করুন</option>
-          <option value="islam">ইসলাম</option>
-          <option value="hindu">হিন্দু</option>
-          <option value="buddhist">বৌদ্ধ</option>
-          <option value="christian">খ্রিস্টান</option>
+          <option value="">{t("profile.select")}</option>
+          <option value="islam">{t("partners.islam")}</option>
+          <option value="hindu">{t("partners.hindu")}</option>
+          <option value="buddhist">{t("partners.buddhist")}</option>
+          <option value="christian">{t("partners.christian")}</option>
         </select>
 
-        <label className="small">নিজের সম্পর্কে</label>
-        <textarea placeholder="নিজের সম্পর্কে লিখুন..." value={profile.bio || ""} onChange={(e) => set("bio", e.target.value)} rows={3} />
+        <label className="small">{t("profile.about")}</label>
+        <textarea placeholder={t("profile.aboutPh")} value={profile.bio || ""} onChange={(e) => set("bio", e.target.value)} rows={3} />
 
-        <label className="small">প্রোফাইল ছবি (মূল)</label>
+        <label className="small">{t("profile.photoMain")}</label>
         <input type="file" accept="image/*" onChange={(e) => handlePhoto("photo1", e)} />
         {profile.photo1 && <img src={profile.photo1} style={{ width: 100, height: 100, borderRadius: 12, objectFit: "cover", marginBottom: 10 }} />}
 
-        <label className="small">মিডিয়া ছবি (দ্বিতীয়)</label>
+        <label className="small">{t("profile.photo2")}</label>
         <input type="file" accept="image/*" onChange={(e) => handlePhoto("photo2", e)} />
         {profile.photo2 && <img src={profile.photo2} style={{ width: 100, height: 100, borderRadius: 12, objectFit: "cover", marginBottom: 10 }} />}
 
-        <button className="btn" onClick={save} disabled={saving}>{saving ? "সেভ হচ্ছে..." : "💾 সেভ করুন"}</button>
+        <button className="btn" onClick={save} disabled={saving}>{saving ? t("profile.saving") : t("profile.save")}</button>
         {msg && <div className="alert alert-ok">{msg}</div>}
       </div>
 
       <div className="card">
         <h3>🔒 প্রাইভেসি সেটিংস</h3>
         <div className="row-between">
-          <span>অনলাইন স্ট্যাটাস লুকান</span>
+          <span>{t("profile.hideOnline")}</span>
           <button onClick={() => { set("hide_online", !profile.hide_online); }} className="btn btn-outline" style={{ marginBottom: 0, width: "auto", padding: "8px 16px" }}>
-            {profile.hide_online ? "লুকানো ✅" : "দেখানো"}
+            {profile.hide_online ? t("profile.hidden") : t("profile.shown")}
           </button>
         </div>
       </div>
@@ -176,12 +178,12 @@ export default function Profile() {
       <div className="card">
         <h3>✅ ভেরিফিকেশন</h3>
         {profile.verification_status === "approved" ? (
-          <p style={{ color: "#4caf50", fontWeight: 700 }}>✓ ভেরিফাইড প্রোফাইল</p>
+          <p style={{ color: "#4caf50", fontWeight: 700 }}>{t("pd.verified")}</p>
         ) : profile.verification_status === "pending" ? (
           <p className="small">⏳ যাচাই চলছে...</p>
         ) : (
           <>
-            <p className="small">সেলফি আপলোড করে ভেরিফাইড ব্যাজ পান</p>
+            <p className="small">{t("profile.selfie")}</p>
             <input type="file" accept="image/*" onChange={(e) => {
               const f = e.target.files?.[0];
               if (!f) return;
@@ -200,7 +202,7 @@ export default function Profile() {
                     body: JSON.stringify({ selfie: c.toDataURL("image/jpeg", 0.7) }),
                   });
                   const d = await r.json();
-                  alert(d.ok ? "✅ সেলফি জমা হয়েছে! অ্যাডমিন যাচাই করবে।" : (d.error || "ব্যর্থ"));
+                  alert(d.ok ? t("profile.selfieOk") : (d.error || t("common.fail")));
                 };
                 img.src = reader.result as string;
               };
@@ -211,8 +213,8 @@ export default function Profile() {
       </div>
 
       <div className="card">
-        <h3>🚀 প্রোফাইল বুস্ট</h3>
-        <p className="small">বুস্ট করলে আপনার প্রোফাইল সবার উপরে দেখাবে</p>
+        <h3>{t("profile.boost")}</h3>
+        <p className="small">{t("profile.boostInfo")}</p>
         <div className="row">
           <button className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }} onClick={() => boost(24)}>২৪ ঘণ্টা — ৳১০০</button>
           <button className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }} onClick={() => boost(72)}>৭২ ঘণ্টা — ৳২০০</button>
@@ -227,17 +229,11 @@ export default function Profile() {
         </div>
         <div className="row mt">
           <Link href="/support" className="btn btn-outline" style={{ marginBottom: 0, flex: 1 }}>🆘 সাপোর্ট</Link>
-          <button onClick={logout} className="btn btn-outline" style={{ marginBottom: 0, flex: 1, borderColor: "#f44336", color: "#f44336" }}>🚪 লগআউট</button>
+          <button onClick={logout} className="btn btn-outline" style={{ marginBottom: 0, flex: 1, borderColor: "#f44336", color: "#f44336" }}>🚪 {t("dash.logout")}</button>
         </div>
       </div>
 
-      <nav className="nav">
-        <Link href="/dashboard"><span className="ico">🏠</span>হোম</Link>
-        <Link href="/partners"><span className="ico">💑</span>পার্টনার</Link>
-        <Link href="/chat"><span className="ico">💬</span>চ্যাট</Link>
-        <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
-        <Link href="/profile" className="active"><span className="ico">👤</span>প্রোফাইল</Link>
-      </nav>
+      <Nav active="profile" />
     </div>
   );
 }

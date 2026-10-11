@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromReq, getActiveSubscription, query, queryOne } from "@/lib/auth";
+import { sendPush } from "@/lib/push";
 
 // Check for spam: numbers, links (auto-delete + suspend logic handled in POST)
 function containsBlocked(content: string, canShareNumber: boolean, canShareLink: boolean): string | null {
@@ -163,6 +164,10 @@ export async function POST(req: NextRequest) {
   // Notification
   await query("INSERT INTO notifications (user_id, title, body, ntype) VALUES ($1, $2, $3, 'message')",
     [receiver_id, "নতুন মেসেজ", `${user.name} মেসেজ পাঠিয়েছেন`]);
+
+  // Web push (fire-and-forget)
+  const preview = msg_type === "text" ? content.trim().slice(0, 60) : msg_type === "photo" ? "📷 ছবি" : msg_type === "voice" ? "🎤 ভয়েস মেসেজ" : "মেসেজ";
+  sendPush(receiver_id, `💬 ${user.name}`, preview, "/chat").catch(() => {});
 
   return NextResponse.json({ ok: true });
 }

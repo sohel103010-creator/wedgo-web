@@ -2,8 +2,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { COUNTRY_CODES, composePhone } from "@/lib/phone";
+import { useLang, LangToggle } from "@/lib/i18n";
 
 export default function ForgotPassword() {
+  const { t } = useLang();
   const [mobile, setMobile] = useState("");
   const [cc, setCc] = useState("880");
   const [email, setEmail] = useState("");
@@ -26,7 +28,7 @@ export default function ForgotPassword() {
   return (
     <div className="container">
       <div className="logo" style={{ fontSize: 28 }}>💒 WedGo</div>
-      <h2 className="title">পাসওয়ার্ড রিসেট</h2>
+      <div className="row-between" style={{ marginBottom: 12 }}><h2 className="title" style={{ margin: 0 }}>{t("auth.resetTitle")}</h2><LangToggle /></div>
       <div className="card">
         <div style={{ display: "flex", gap: 8 }}>
           <select value={cc} onChange={(e) => setCc(e.target.value)} style={{ maxWidth: 128 }}>
@@ -34,10 +36,10 @@ export default function ForgotPassword() {
               <option key={c.code} value={c.code}>{c.flag} +{c.code}</option>
             ))}
           </select>
-          <input placeholder="মোবাইল নম্বর" value={mobile} onChange={(e) => setMobile(e.target.value)} style={{ flex: 1 }} />
+          <input placeholder={t("auth.mobilePh")} value={mobile} onChange={(e) => setMobile(e.target.value)} style={{ flex: 1 }} />
         </div>
-        <input type="email" placeholder="রেজিস্ট্রেশনের জিমেইল" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input type="password" placeholder="নতুন পাসওয়ার্ড" value={newPw} onChange={(e) => setNewPw(e.target.value)} />
+        <input type="email" placeholder={t("auth.resetEmailPh")} value={email} onChange={(e) => setEmail(e.target.value)} />
+        <input type="password" placeholder={t("auth.newPwPh")} value={newPw} onChange={(e) => setNewPw(e.target.value)} />
         <button className="btn" onClick={reset}>পাসওয়ার্ড পরিবর্তন</button>
         {msg && <div className={ok ? "alert alert-ok" : "alert alert-err"}>{msg}</div>}
         {ok && <Link href="/login" className="btn center">লগইন করুন</Link>}

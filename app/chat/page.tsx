@@ -1,8 +1,10 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import { useLang, Nav } from "@/lib/i18n";
 
 export default function Chat() {
+  const { t, lang } = useLang();
   const [chats, setChats] = useState<any[]>([]);
   const [requests, setRequests] = useState<any[]>([]);
   const [active, setActive] = useState<any>(null);
@@ -16,6 +18,8 @@ export default function Chat() {
   const mediaRef = useRef<MediaRecorder | null>(null);
   const audioChunks = useRef<Blob[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
+
+  const timeLocale = lang === "en" ? "en-US" : "bn-BD";
 
   useEffect(() => {
     const token = localStorage.getItem("wedgo_token");
@@ -60,7 +64,7 @@ export default function Chat() {
     if (d.ok) {
       window.location.href = `/call/${d.call_id}?caller=1&type=${type}&to=${active.user_id}`;
     } else {
-      alert(d.error || "কল করা যায়নি");
+      alert(d.error || t("chat.callFailed"));
     }
   }
 
@@ -106,7 +110,7 @@ export default function Chat() {
     });
     const d = await r.json();
     if (d.ok) { setText(""); setReplyTo(null); loadMessages(active.user_id); }
-    else alert(d.error || "পাঠানো যায়নি");
+    else alert(d.error || t("chat.sendFailed"));
   }
 
   async function deleteMsg(id: number, forEveryone: boolean) {
@@ -144,7 +148,7 @@ export default function Chat() {
       };
       mr.start();
       setRecording(true);
-    } catch { alert("মাইক্রোফোন এক্সেস দিন"); }
+    } catch { alert(t("chat.micDenied")); }
   }
 
   function stopRecording() {
@@ -187,8 +191,8 @@ export default function Chat() {
         {isMe && (
           <>
             <button onClick={() => pinMsg(m.id, m.pinned)} style={{ background: "none", border: "none", color: "#f5a623", fontSize: 12 }}>{m.pinned ? "📌" : "📍"}</button>
-            <button onClick={() => { if (confirm("ডিলিট করবেন?")) deleteMsg(m.id, false); }} style={{ background: "none", border: "none", color: "#f44336", fontSize: 12 }}>🗑</button>
-            <button onClick={() => { if (confirm("সবার জন্য ডিলিট করবেন?")) deleteMsg(m.id, true); }} style={{ background: "none", border: "none", color: "#f44336", fontSize: 12 }}>🗑👥</button>
+            <button onClick={() => { if (confirm(t("chat.delConfirm"))) deleteMsg(m.id, false); }} style={{ background: "none", border: "none", color: "#f44336", fontSize: 12 }}>🗑</button>
+            <button onClick={() => { if (confirm(t("chat.delAllConfirm"))) deleteMsg(m.id, true); }} style={{ background: "none", border: "none", color: "#f44336", fontSize: 12 }}>🗑👥</button>
           </>
         )}
       </div>
@@ -199,7 +203,7 @@ export default function Chat() {
         <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`} style={{ padding: 4 }}>
           {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
           <img src={m.content} style={{ maxWidth: 220, borderRadius: 12 }} />
-          <div className="small" style={{ fontSize: 10, opacity: 0.7, padding: "0 8px 4px" }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+          <div className="small" style={{ fontSize: 10, opacity: 0.7, padding: "0 8px 4px" }}>{new Date(m.created_at).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</div>
           {actions}
         </div>
       );
@@ -209,7 +213,7 @@ export default function Chat() {
         <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`}>
           {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
           <audio controls src={m.content} style={{ maxWidth: 200 }} />
-          <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+          <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</div>
           {actions}
         </div>
       );
@@ -218,7 +222,7 @@ export default function Chat() {
       <div key={m.id} className={`chat-bubble ${isMe ? "chat-me" : "chat-them"}`}>
         {m.pinned && <div style={{ fontSize: 10 }}>📌 পিন করা</div>}
         {m.deleted ? msgContent : m.content}
-        <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString("bn-BD", { hour: "2-digit", minute: "2-digit" })}</div>
+        <div className="small" style={{ fontSize: 10, opacity: 0.7 }}>{new Date(m.created_at).toLocaleTimeString(timeLocale, { hour: "2-digit", minute: "2-digit" })}</div>
         {actions}
       </div>
     );
@@ -235,7 +239,7 @@ export default function Chat() {
         </div>
         <div style={{ flex: 1, overflowY: "auto", padding: "12px 0" }}>
           {messages.map((m: any) => renderMessage(m))}
-          {typing && <div className="chat-bubble chat-them"><em>টাইপ করছেন...</em></div>}
+          {typing && <div className="chat-bubble chat-them"><em>{t("chat.typing")}</em></div>}
           <div ref={bottomRef}></div>
         </div>
         {replyTo && (
@@ -257,7 +261,7 @@ export default function Chat() {
             }}>
             {recording ? "⏹" : "🎤"}
           </button>
-          <input placeholder="মেসেজ লিখুন..." value={text} onChange={(e) => { setText(e.target.value); onTyping(); }}
+          <input placeholder={t("chat.typeMsg")} value={text} onChange={(e) => { setText(e.target.value); onTyping(); }}
             onKeyDown={(e) => e.key === "Enter" && send()} style={{ marginBottom: 0 }} />
           <button className="btn" style={{ width: 70, marginBottom: 0 }} onClick={() => send()}>➤</button>
         </div>
@@ -267,10 +271,10 @@ export default function Chat() {
 
   return (
     <div className="container page-pad">
-      <h2 className="title">💬 মেসেজ</h2>
+      <h2 className="title">{t("chat.title")}</h2>
       {requests.length > 0 && (
         <div className="card" style={{ border: "2px solid #e91e63" }}>
-          <h3>💌 চ্যাট রিকোয়েস্ট ({requests.length})</h3>
+          <h3>{t("chat.requests")} ({requests.length})</h3>
           {requests.map((r: any) => (
             <div key={r.id} className="row-between" style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
               <div className="row" style={{ alignItems: "center", gap: 10 }}>
@@ -291,8 +295,8 @@ export default function Chat() {
       )}
       {chats.length === 0 && (
         <div className="card center">
-          <p>এখনো কোনো চ্যাট নেই</p>
-          <Link href="/partners" className="btn mt">পার্টনার খুঁজুন</Link>
+          <p>{t("chat.noChats")}</p>
+          <Link href="/partners" className="btn mt">{t("dash.findPartner")}</Link>
         </div>
       )}
       {chats.map((c: any) => (
@@ -307,13 +311,7 @@ export default function Chat() {
           {c.unread > 0 && <span className="badge" style={{ background: "#e91e63" }}>{c.unread}</span>}
         </div>
       ))}
-      <nav className="nav">
-        <Link href="/dashboard"><span className="ico">🏠</span>হোম</Link>
-        <Link href="/partners"><span className="ico">💑</span>পার্টনার</Link>
-        <Link href="/chat" className="active"><span className="ico">💬</span>চ্যাট</Link>
-        <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
-        <Link href="/profile"><span className="ico">👤</span>প্রোফাইল</Link>
-      </nav>
+      <Nav active="chat" />
 
       {/* Incoming call popup */}
       {incoming && (
@@ -321,11 +319,11 @@ export default function Chat() {
           <div className="card center" style={{ maxWidth: 320 }}>
             <div style={{ fontSize: 64 }}>{incoming.call_type === "video" ? "📹" : "🎙"}</div>
             <h2>{incoming.caller_name}</h2>
-            <p className="small">{incoming.call_type === "video" ? "ভিডিও কল" : "অডিও কল"} আসছে...</p>
+            <p className="small">{incoming.call_type === "video" ? t("chat.videoCall") : t("chat.audioCall")} আসছে...</p>
             <div className="row mt">
               <button className="btn" style={{ marginBottom: 0, background: "#4caf50" }}
                 onClick={() => window.location.href = `/call/${incoming.id}?type=${incoming.call_type}`}>
-                ✅ ধরুন
+                ✅ {t("chat.answer")}
               </button>
               <button className="btn" style={{ marginBottom: 0, background: "#f44336" }}
                 onClick={async () => {
@@ -337,7 +335,7 @@ export default function Chat() {
                   });
                   setIncoming(null);
                 }}>
-                ❌ কাটুন
+                ❌ {t("chat.decline")}
               </button>
             </div>
           </div>

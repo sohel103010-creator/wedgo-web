@@ -1,6 +1,7 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
 import { getUserFromReq, getActiveSubscription, query, queryOne } from "@/lib/auth";
+import { sendPush } from "@/lib/push";
 
 // Initiate a call
 export async function POST(req: NextRequest) {
@@ -56,6 +57,9 @@ export async function POST(req: NextRequest) {
   // Notify receiver
   await query("INSERT INTO notifications (user_id, title, body, ntype) VALUES ($1, $2, $3, 'call')",
     [receiver_id, call_type === "video" ? "📹 ভিডিও কল আসছে" : "🎙 অডিও কল আসছে", `${user.name} কল করছেন`]);
+
+  // Web push for incoming call (fire-and-forget)
+  sendPush(receiver_id, "📞 WedGo কল", `${user.name} কল করছেন`, "/chat").catch(() => {});
 
   return NextResponse.json({ ok: true, call_id: call!.id });
 }

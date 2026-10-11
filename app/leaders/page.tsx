@@ -1,8 +1,9 @@
 "use client";
 import { useState, useEffect } from "react";
-import Link from "next/link";
+import { useLang, Nav } from "@/lib/i18n";
 
 export default function Leaders() {
+  const { t } = useLang();
   const [leaders, setLeaders] = useState<any[]>([]);
   const [me, setMe] = useState<any>(null);
 
@@ -21,7 +22,7 @@ export default function Leaders() {
   if (me && me.user?.gender !== "female" && me.user?.role !== "admin") {
     return (
       <div className="container page-pad center">
-        <div className="card"><p>শুধুমাত্র নারী সদস্যরা দেখতে পারবে</p></div>
+        <div className="card"><p>{t("lead.femaleOnly")}</p></div>
       </div>
     );
   }
@@ -30,8 +31,8 @@ export default function Leaders() {
 
   return (
     <div className="container page-pad">
-      <h2 className="title">🏆 টপ আর্নার</h2>
-      <p className="subtitle">সর্বোচ্চ আয়কারী নারী সদস্য</p>
+      <h2 className="title">{t("lead.title")}</h2>
+      <p className="subtitle">{t("lead.sub")}</p>
       {leaders.map((l: any, i: number) => (
         <div key={l.id} className="card row">
           <span style={{ fontSize: 28 }}>{medals[i] || `${i + 1}.`}</span>
@@ -44,13 +45,7 @@ export default function Leaders() {
           </div>
         </div>
       ))}
-      <nav className="nav">
-        <Link href="/dashboard"><span className="ico">🏠</span>হোম</Link>
-        <Link href="/partners"><span className="ico">💑</span>পার্টনার</Link>
-        <Link href="/chat"><span className="ico">💬</span>চ্যাট</Link>
-        <Link href="/wallet"><span className="ico">💰</span>ওয়ালেট</Link>
-        <Link href="/profile"><span className="ico">👤</span>প্রোফাইল</Link>
-      </nav>
+      <Nav active="" />
     </div>
   );
 }
