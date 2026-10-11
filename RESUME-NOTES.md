@@ -23,3 +23,9 @@
 - Register/login/forgot-password now have a country-code selector (18 countries: BD +91 +92 +966 +971 +974 +965 +968 +973 +60 +65 +44 +1 +61 +39 +33 +49 +34).
 - All numbers stored E.164 (+<cc><number>); login/forgot try legacy BD format ("017...") as fallback for old accounts.
 - OPEN ISSUE: payments are still BD-only (bKash/Nagad/Rocket) — international users cannot buy packages yet. Needs product decision (Stripe/card?).
+
+## 2026-10-11 ~23:30 — 3 advanced features (commit 42bd6c2, Vercel READY)
+1. **BN/EN language slide toggle**: বাং ⇄ EN pill toggle in bottom nav (all member pages) + landing/auth headers; choice saved in localStorage; full dictionary in lib/dict.ts; admin panel + terms/privacy/refund stay Bengali-only.
+2. **Web push notifications**: VAPID keys set as Vercel env on wedgo-web project; dashboard has "🔔 নোটিফিকেশন চালু করুন" button; push sent on new chat message + incoming call (fire-and-forget, dead subs pruned); sw.js handles push + click-to-open.
+3. **Today's top matches**: /api/daily-matches returns top-5 by compatibility, rotated daily; shown on dashboard in pink-bordered card.
+Note: VAPID vars were briefly created on zenera-shop project by mistake — harmless (unused there), correct ones live on wedgo-web.
