@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 import { NextRequest, NextResponse } from "next/server";
-import { getUserFromReq, getActiveSubscription, query } from "@/lib/auth";
+import { getUserFromReq, getActiveSubscription, query, queryOne } from "@/lib/auth";
 
 // Check for spam: numbers, links (auto-delete + suspend logic handled in POST)
 function containsBlocked(content: string, canShareNumber: boolean, canShareLink: boolean): string | null {
@@ -124,6 +124,27 @@ export async function POST(req: NextRequest) {
     }
     if (!canVoice) {
       return NextResponse.json({ error: "ভয়েস মেসেজ পাঠাতে গোল্ড/প্লাটিনাম প্যাকেজ লাগবে" }, { status: 403 });
+    }
+  }
+
+  // Female teaser limit: when the male has NO active subscription, she may send at most
+  // 3 text messages (counted since his last subscription expired) — the hook that
+  // makes him buy a package again to keep talking.
+  if (isFemale && !isAdmin && (msg_type === "text" || !msg_type)) {
+    const maleSub = await getActiveSubscription(receiver_id);
+    if (!maleSub) {
+      const lastSub = await queryOne(
+        "SELECT expires_at FROM subscriptions WHERE user_id = $1 ORDER BY expires_at DESC LIMIT 1",
+        [receiver_id]
+      );
+      const since = lastSub?.expires_at ?? null;
+      const sent = await queryOne(
+        `SELECT COUNT(*)::int AS c FROM messages WHERE sender_id = $1 AND receiver_id = $2 AND (msg_type = 'text' OR msg_type IS NULL)${since ? " AND created_at > $3" : ""}`,
+        since ? [user.id, receiver_id, since] : [user.id, receiver_id]
+      );
+      if ((sent?.c || 0) >= 3) {
+        return NextResponse.json({ error: "তিনি প্যাকেজ কিনলে আবার কথা বলতে পারবেন 💛" }, { status: 403 });
+      }
     }
   }
 

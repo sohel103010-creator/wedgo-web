@@ -29,6 +29,8 @@ export default function CallPage() {
   const streamRef = useRef<MediaStream | null>(null);
   const lastIceRef = useRef("1970-01-01");
   const timerRef = useRef<any>(null);
+  const maxDurRef = useRef(3600);
+  const [lowTime, setLowTime] = useState(false);
 
   function token() { return localStorage.getItem("wedgo_token") || ""; }
 
@@ -105,6 +107,9 @@ export default function CallPage() {
         });
         const d = await r.json();
         if (!d.call) { clearInterval(poll); return; }
+        if (typeof d.max_duration_sec === "number" && d.max_duration_sec > 0) {
+          maxDurRef.current = d.max_duration_sec;
+        }
 
         if (d.call.status === "ended" || d.call.status === "rejected") {
           clearInterval(poll);
@@ -142,12 +147,15 @@ export default function CallPage() {
   function startTimer() {
     timerRef.current = setInterval(() => {
       setDuration((d) => {
-        // Auto-cut at 60 minutes (3600 sec)
-        if (d + 1 >= 3600) {
+        const nd = d + 1;
+        const max = maxDurRef.current;
+        // Cut at payer's remaining minutes (or 60-min hard cap)
+        if (nd >= max) {
           endCall();
           return d;
         }
-        return d + 1;
+        if (max - nd === 60) setLowTime(true);
+        return nd;
       });
     }, 1000);
   }
@@ -197,6 +205,11 @@ export default function CallPage() {
       <div style={{ background: "#f44336", color: "#fff", textAlign: "center", padding: "6px", fontSize: 12, fontWeight: 700 }}>
         🔒 স্ক্রিনশট ও স্ক্রিনরেকর্ড নিষিদ্ধ
       </div>
+      {lowTime && status === "ongoing" && (
+        <div style={{ background: "#ff9800", color: "#fff", textAlign: "center", padding: "6px", fontSize: 13, fontWeight: 700 }}>
+          ⏳ ১ মিনিট বাকি — মিনিট শেষ হলে কল কেটে যাবে
+        </div>
+      )}
       <div style={{ padding: 16, textAlign: "center" }}>
         <h2>{remoteName || "কল হচ্ছে..."}</h2>
         <p style={{ color: "#aaa" }}>
