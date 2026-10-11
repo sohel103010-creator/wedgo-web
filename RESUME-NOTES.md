@@ -15,6 +15,6 @@
 ## Known gaps — status (updated 2026-10-11 ~22:50 Dhaka)
 1. **Mid-call cutoff — FIXED** (commit 53ac815): server returns `max_duration_sec` = min(payer male's remaining minutes × 60, 3600) in GET /api/calls; call page cuts at that mark with a 1-min "⏳ ১ মিনিট বাকি" warning banner.
 2. **Female TEXT teaser limit — IMPLEMENTED per user's product decision** (commit 53ac815): when the male has no active subscription, the female may send max 3 text messages (counted since his last subscription expired; resets on each expiry) — the renewal hook. Error: "তিনি প্যাকেজ কিনলে আবার কথা বলতে পারবেন 💛". Unlimited while his subscription is active.
-3. **3-partner count is lifetime** (counts all messages ever); renewing 100৳ does not reset. OPEN — user asked for re-explanation, decision pending.
+3. **3-partner count is lifetime — CONFIRMED as intended behavior** (user decision 2026-10-11 ~22:55): each 100৳ renewal continues chat with the SAME 3 partners; no new partners on renewal. Current code already does exactly this (existing partners bypass the cap check). NO CHANGE NEEDED.
 
 ## Full business rules + final spec: see ~/MEMORY.md "WedGo v2 — Current Status" (2026-10-10 ~14:15 section).
