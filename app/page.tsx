@@ -110,6 +110,23 @@ export default function Home() {
         </div>
       </div>
 
+      <div className="card mt center" style={{ border: "1px solid #e91e63" }}>
+        <h3>📱 WedGo অ্যাপ ডাউনলোড করুন</h3>
+        <p className="small" style={{ marginTop: 8 }}>
+          প্লে স্টোর ছাড়াই সরাসরি ডাউনলোড করুন — ওয়েবসাইটের সব ফিচার অ্যাপেই পাবেন
+        </p>
+        <a
+          href="https://github.com/sohel103010-creator/wedgo-web/releases/download/v1.0-app/wedgo.apk"
+          className="btn center"
+          style={{ marginTop: 12, background: "#e91e63" }}
+        >
+          ⬇ অ্যাপ ডাউনলোড (v1.0)
+        </a>
+        <p className="small" style={{ marginTop: 10, opacity: 0.8 }}>
+          ইনস্টল: ডাউনলোড → ফাইলে ট্যাপ → Install। প্রয়োজনে "Unknown sources" allow করুন।
+        </p>
+      </div>
+
       <p className="small center mt" style={{ paddingBottom: 20 }}>
         <a href="https://www.facebook.com/profile.php?id=61594689478770" target="_blank" style={{ color: "#e91e63" }}>📘 Facebook Page</a>
       </p>
