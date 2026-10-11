@@ -18,3 +18,8 @@
 3. **3-partner count is lifetime — CONFIRMED as intended behavior** (user decision 2026-10-11 ~22:55): each 100৳ renewal continues chat with the SAME 3 partners; no new partners on renewal. Current code already does exactly this (existing partners bypass the cap check). NO CHANGE NEEDED.
 
 ## Full business rules + final spec: see ~/MEMORY.md "WedGo v2 — Current Status" (2026-10-10 ~14:15 section).
+
+## 2026-10-11 ~23:00 — International phone numbers
+- Register/login/forgot-password now have a country-code selector (18 countries: BD +91 +92 +966 +971 +974 +965 +968 +973 +60 +65 +44 +1 +61 +39 +33 +49 +34).
+- All numbers stored E.164 (+<cc><number>); login/forgot try legacy BD format ("017...") as fallback for old accounts.
+- OPEN ISSUE: payments are still BD-only (bKash/Nagad/Rocket) — international users cannot buy packages yet. Needs product decision (Stripe/card?).
