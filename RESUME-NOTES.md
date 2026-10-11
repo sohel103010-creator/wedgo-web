@@ -12,9 +12,9 @@
 - Female earnings rates: video 10m=300/20m=500/30m=700/40m=900/50m=1100/60m=1300; audio 10m=100/20m=180/30m=250/60m=400/90m=700/120m=900
 - Coupon system REMOVED; gold-hearts logo at public/logo.png; auto-scroll to payment form on Buy click
 
-## Known gaps — address FIRST when the user resumes (never claim done)
-1. **Mid-call cutoff NOT implemented** (`app/call/[id]/page.tsx`): auto-cut only at 60 min. A male with 5 min left can talk up to 60 min; deduction caps at remaining (no overcharge) BUT the female earns for unpaid minutes → real money leak. Fix: cut at min(remaining_min*60, 3600)s with a 1-min warning.
-2. **Female TEXT not gated by male's subscription** (`app/api/chat/route.ts`): a female can send unlimited text to a male with no/expired subscription (photo/voice/number/link ARE gated on his sub). Product decision needed: (a) block her with "তার সাবস্ক্রিপশন শেষ" notice [recommended], or (b) let her send while he can't reply.
-3. **3-partner count is lifetime** (counts all messages ever); renewing 100৳ does not reset. Confirm whether user expects per-subscription reset.
+## Known gaps — status (updated 2026-10-11 ~22:50 Dhaka)
+1. **Mid-call cutoff — FIXED** (commit 53ac815): server returns `max_duration_sec` = min(payer male's remaining minutes × 60, 3600) in GET /api/calls; call page cuts at that mark with a 1-min "⏳ ১ মিনিট বাকি" warning banner.
+2. **Female TEXT teaser limit — IMPLEMENTED per user's product decision** (commit 53ac815): when the male has no active subscription, the female may send max 3 text messages (counted since his last subscription expired; resets on each expiry) — the renewal hook. Error: "তিনি প্যাকেজ কিনলে আবার কথা বলতে পারবেন 💛". Unlimited while his subscription is active.
+3. **3-partner count is lifetime** (counts all messages ever); renewing 100৳ does not reset. OPEN — user asked for re-explanation, decision pending.
 
 ## Full business rules + final spec: see ~/MEMORY.md "WedGo v2 — Current Status" (2026-10-10 ~14:15 section).
