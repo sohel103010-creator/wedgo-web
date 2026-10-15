@@ -31,8 +31,9 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       }
     }
   }
-  // Log profile view
-  if (user && user.id != params.id) {
+  const isAdmin = user?.role === "admin";
+  // Log profile view (admin visits are stealth: no log, no notification)
+  if (user && user.id != params.id && !isAdmin) {
     await query("INSERT INTO profile_views (viewer_id, viewed_id) VALUES ($1, $2)", [user.id, params.id]);
     // Notify (only once per day per viewer to avoid spam)
     const recent = await query(
@@ -43,6 +44,10 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
       await query("INSERT INTO notifications (user_id, title, body, ntype) VALUES ($1, $2, $3, 'profile_view')",
         [params.id, "👁 কেউ প্রোফাইল দেখেছে", `${user.name} আপনার প্রোফাইল দেখেছেন`]);
     }
+  }
+  // Admin sees everything including mobile number
+  if (isAdmin) {
+    return NextResponse.json({ partner: p });
   }
   const { mobile, ...safe } = p;
   // Hide mobile unless premium with number share

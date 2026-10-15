@@ -105,6 +105,10 @@ export default function Admin() {
                   <td>{u.name}</td><td>{u.mobile}</td><td>{u.gender === "male" ? "👨" : "👩"}</td>
                   <td>{u.has_premium > 0 ? "✅" : "—"}</td><td>{u.status}</td>
                   <td style={{ whiteSpace: "nowrap" }}>
+                    <button onClick={() => { window.location.href = `/partners/${u.id}`; }} style={{ fontSize: 11, padding: "4px 8px", margin: 2 }}>👁 প্রোফাইল</button>
+                    <button onClick={() => { window.location.href = `/chat?with=${u.id}`; }} style={{ fontSize: 11, padding: "4px 8px", margin: 2 }}>💬 মেসেজ</button>
+                    <button onClick={() => { window.location.href = `/chat?with=${u.id}&call=audio`; }} style={{ fontSize: 11, padding: "4px 8px", margin: 2 }}>📞 কল</button>
+                    <button onClick={() => { window.location.href = `/chat?with=${u.id}&call=video`; }} style={{ fontSize: 11, padding: "4px 8px", margin: 2 }}>📹 ভিডিও</button>
                     <button onClick={() => action("verify_user", { user_id: u.id })} style={{ fontSize: 11, padding: "4px 8px", margin: 2 }}>✓ ভেরিফাই</button>
                     {u.status === "active" ? (
                       <button onClick={() => action("suspend_user", { user_id: u.id, days: 2 })} style={{ fontSize: 11, padding: "4px 8px", margin: 2 }}>⏸ স্থগিত</button>

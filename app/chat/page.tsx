@@ -26,6 +26,12 @@ export default function Chat() {
     if (!token) { window.location.href = "/login"; return; }
     fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } }).then((r) => r.json()).then(setMe);
     loadChats();
+    // Admin deep-link: /chat?with=<user_id>&call=audio|video
+    const qs = new URLSearchParams(window.location.search);
+    const withId = qs.get("with");
+    if (withId && /^\d+$/.test(withId)) {
+      openDirectChat(parseInt(withId), qs.get("call"));
+    }
     const iv = setInterval(() => { loadChats(); if (active) loadMessages(active.user_id); checkIncoming(); }, 5000);
     checkIncoming();
     return () => clearInterval(iv);
@@ -52,20 +58,37 @@ export default function Chat() {
       });
   }
 
-  async function startCall(type: "audio" | "video") {
-    if (!active) return;
+  async function startCall(type: "audio" | "video", target?: any) {
+    const who = target || active;
+    if (!who) return;
     const token = localStorage.getItem("wedgo_token");
     const r = await fetch("/api/calls", {
       method: "POST",
       headers: { "Content-Type": "application/json", Authorization: "Bearer " + token },
-      body: JSON.stringify({ receiver_id: active.user_id, call_type: type }),
+      body: JSON.stringify({ receiver_id: who.user_id, call_type: type }),
     });
     const d = await r.json();
     if (d.ok) {
-      window.location.href = `/call/${d.call_id}?caller=1&type=${type}&to=${active.user_id}`;
+      window.location.href = `/call/${d.call_id}?caller=1&type=${type}&to=${who.user_id}`;
     } else {
       alert(d.error || t("chat.callFailed"));
     }
+  }
+
+  // Admin deep-link: /chat?with=<user_id>&call=audio|video — opens 1-on-1 directly
+  async function openDirectChat(uid: number, autoCall?: string | null) {
+    const token = localStorage.getItem("wedgo_token");
+    try {
+      const r = await fetch(`/api/partners/${uid}`, { headers: { Authorization: "Bearer " + token } }).then((x) => x.json());
+      if (r.partner) {
+        const c = { user_id: r.partner.id, name: r.partner.name, photo1: r.partner.photo1 || null };
+        setActive(c);
+        loadMessages(uid);
+        if (autoCall === "audio" || autoCall === "video") {
+          startCall(autoCall as "audio" | "video", c);
+        }
+      }
+    } catch {}
   }
 
   function loadChats() {

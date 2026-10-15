@@ -16,7 +16,7 @@ export default function PartnerDetail() {
   useEffect(() => {
     const token = localStorage.getItem("wedgo_token");
     if (token) fetch("/api/auth/me", { headers: { Authorization: "Bearer " + token } }).then((r) => r.json()).then(setMe);
-    fetch(`/api/partners/${params.id}`).then((r) => r.json()).then((d) => setPartner(d.partner));
+    fetch(`/api/partners/${params.id}`, { headers: token ? { Authorization: "Bearer " + token } : {} }).then((r) => r.json()).then((d) => setPartner(d.partner));
   }, []);
 
   async function sendLike() {
@@ -188,6 +188,9 @@ export default function PartnerDetail() {
           <tr><td>{t("pd.occupation")}</td><td>{p.occupation || "—"}</td></tr>
           <tr><td>{t("pd.religion")}</td><td>{p.religion || "—"}</td></tr>
           <tr><td>{t("pd.gharjamai")}</td><td>{p.ghar_jamai || "—"}</td></tr>
+          {me?.user?.role === "admin" && p.mobile && (
+            <tr><td>📱 মোবাইল (অ্যাডমিন)</td><td style={{ fontWeight: 700, color: "#4caf50" }}>{p.mobile}</td></tr>
+          )}
         </table>
         {p.bio && <><h3 className="mt">{t("pd.about")}</h3><p className="small" style={{ lineHeight: 1.8 }}>{p.bio}</p></>}
         {p.photo2 && <><h3 className="mt">{t("pd.media")}</h3><img src={p.photo2} style={{ width: "100%", borderRadius: 12 }} /></>}

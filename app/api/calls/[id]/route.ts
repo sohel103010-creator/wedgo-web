@@ -67,10 +67,14 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     );
 
     // Deduct minutes from the male's subscription (or caller's if male)
-    const caller = await queryOne("SELECT gender FROM users WHERE id = $1", [call.caller_id]);
+    // Admin calls are free: no minute deduction, no female earnings.
+    const caller = await queryOne("SELECT gender, role FROM users WHERE id = $1", [call.caller_id]);
+    const receiver = await queryOne("SELECT role FROM users WHERE id = $1", [call.receiver_id]);
+    const adminInvolved = caller?.role === "admin" || receiver?.role === "admin";
     const maleId = caller?.gender === "male" ? call.caller_id : call.receiver_id;
     const femaleId = caller?.gender === "female" ? call.caller_id : call.receiver_id;
 
+    if (!adminInvolved) {
     const sub = await getActiveSubscription(maleId);
     if (sub && durationMin > 0) {
       if (call.call_type === "video") {
@@ -92,6 +96,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
         await query("INSERT INTO notifications (user_id, title, body, ntype) VALUES ($1, '💰 আয় যোগ হয়েছে', $2, 'earning')",
           [femaleId, `কল থেকে ৳${earning} আয় হয়েছে`]);
       }
+    }
     }
 
     return NextResponse.json({ ok: true, duration_sec: durationSec });

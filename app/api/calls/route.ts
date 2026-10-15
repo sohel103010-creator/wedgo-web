@@ -89,19 +89,23 @@ export async function GET(req: NextRequest) {
 
     // Max call duration from the payer's (male's) remaining minutes — prevents
     // talking beyond paid minutes (money leak). Capped at the 60-min hard limit.
+    // Admin calls: full hour, no minute checks.
     let max_duration_sec = 3600;
     try {
-      const us = await query("SELECT id, gender FROM users WHERE id = $1 OR id = $2", [call.caller_id, call.receiver_id]);
-      const male = us.rows.find((u: any) => u.gender === "male");
-      if (male) {
-        const msub = await getActiveSubscription(male.id);
-        if (msub) {
-          const mins = call.call_type === "video"
-            ? (msub.video_minutes || 0) - (msub.video_used || 0)
-            : (msub.audio_minutes || 0) - (msub.audio_used || 0);
-          max_duration_sec = Math.max(0, Math.min(Math.floor(mins * 60), 3600));
-        } else {
-          max_duration_sec = 0;
+      const us = await query("SELECT id, gender, role FROM users WHERE id = $1 OR id = $2", [call.caller_id, call.receiver_id]);
+      const hasAdmin = us.rows.some((u: any) => u.role === "admin");
+      if (!hasAdmin) {
+        const male = us.rows.find((u: any) => u.gender === "male");
+        if (male) {
+          const msub = await getActiveSubscription(male.id);
+          if (msub) {
+            const mins = call.call_type === "video"
+              ? (msub.video_minutes || 0) - (msub.video_used || 0)
+              : (msub.audio_minutes || 0) - (msub.audio_used || 0);
+            max_duration_sec = Math.max(0, Math.min(Math.floor(mins * 60), 3600));
+          } else {
+            max_duration_sec = 0;
+          }
         }
       }
     } catch { /* keep 3600 fallback */ }
