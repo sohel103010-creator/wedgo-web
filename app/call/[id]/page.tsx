@@ -32,13 +32,30 @@ export default function CallPage() {
   const lastIceRef = useRef("1970-01-01");
   const timerRef = useRef<any>(null);
   const maxDurRef = useRef(3600);
+  const endedRef = useRef(false); // set once the call is ended by the user/timer
   const [lowTime, setLowTime] = useState(false);
 
   function token() { return localStorage.getItem("wedgo_token") || ""; }
 
   useEffect(() => {
     startCall();
-    return () => { cleanup(); };
+    // If the page is closed while ringing/ongoing, end the call on the server
+    const onUnload = () => {
+      if (endedRef.current) return;
+      endedRef.current = true;
+      const t = localStorage.getItem("wedgo_token") || "";
+      fetch(`/api/calls/${callId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: "Bearer " + t },
+        body: JSON.stringify({ action: "end" }),
+        keepalive: true,
+      }).catch(() => {});
+    };
+    window.addEventListener("beforeunload", onUnload);
+    return () => {
+      window.removeEventListener("beforeunload", onUnload);
+      cleanup();
+    };
   }, []);
 
   async function startCall() {
@@ -73,13 +90,20 @@ export default function CallPage() {
       if (isCaller) {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        // Update offer on server
-        await fetch("/api/calls", {
+        // Attach the offer to the existing call row (created from the chat page)
+        await fetch(`/api/calls/${callId}`, {
           method: "POST",
           headers: { "Content-Type": "application/json", Authorization: "Bearer " + token() },
-          body: JSON.stringify({ receiver_id: searchParams.get("to"), call_type: callType, offer_sdp: JSON.stringify(offer) }),
+          body: JSON.stringify({ action: "offer", offer_sdp: JSON.stringify(offer) }),
         }).catch(() => {});
-        // For existing call, we need to update offer — use direct approach
+        // Show who we're calling
+        try {
+          const r0 = await fetch(`/api/calls?call_id=${callId}`, {
+            headers: { Authorization: "Bearer " + token() },
+          });
+          const d0 = await r0.json();
+          setRemoteName(d0.call?.receiver_name || "");
+        } catch {}
         setStatus("ringing");
       } else {
         // Receiver: get offer and answer
@@ -179,6 +203,7 @@ export default function CallPage() {
   }
 
   function endCallUI(msg: string) {
+    endedRef.current = true;
     cleanup();
     alert(msg + `\nসময়কাল: ${Math.floor(duration / 60)}:${String(duration % 60).padStart(2, "0")}`);
     window.location.href = "/chat";

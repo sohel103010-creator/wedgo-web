@@ -26,11 +26,21 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   const user = await getUserFromReq(req);
   if (!user) return NextResponse.json({ error: "লগইন করুন" }, { status: 401 });
 
-  const { action, answer_sdp, candidate } = await req.json();
+  const { action, answer_sdp, offer_sdp, candidate } = await req.json();
   const callId = params.id;
 
   const call = await queryOne("SELECT * FROM calls WHERE id = $1", [callId]);
   if (!call) return NextResponse.json({ error: "কল পাওয়া যায়নি" }, { status: 404 });
+
+  // Only the two parties of the call may act on it
+  const isParty = call.caller_id === user.id || call.receiver_id === user.id;
+
+  if (action === "offer") {
+    // Caller attaches the WebRTC offer to the existing call row
+    if (call.caller_id !== user.id) return NextResponse.json({ error: "অননুমোদিত" }, { status: 403 });
+    await query("UPDATE calls SET offer_sdp = $1 WHERE id = $2", [offer_sdp || null, callId]);
+    return NextResponse.json({ ok: true });
+  }
 
   if (action === "answer") {
     if (call.receiver_id !== user.id) return NextResponse.json({ error: "অননুমোদিত" }, { status: 403 });
@@ -40,11 +50,13 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   if (action === "reject") {
+    if (!isParty) return NextResponse.json({ error: "অননুমোদিত" }, { status: 403 });
     await query("UPDATE calls SET status = 'rejected', ended_at = NOW() WHERE id = $1", [callId]);
     return NextResponse.json({ ok: true });
   }
 
   if (action === "ice") {
+    if (!isParty) return NextResponse.json({ error: "অননুমোদিত" }, { status: 403 });
     if (!candidate) return NextResponse.json({ error: "candidate লাগবে" }, { status: 400 });
     await query("INSERT INTO ice_candidates (call_id, sender_id, candidate) VALUES ($1, $2, $3)",
       [callId, user.id, JSON.stringify(candidate)]);
@@ -52,6 +64,9 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
   }
 
   if (action === "end") {
+    if (!isParty) return NextResponse.json({ error: "অননুমোদিত" }, { status: 403 });
+    // Idempotent: ignore repeat end calls (button + beforeunload race)
+    if (call.status === "ended") return NextResponse.json({ ok: true, already: true });
     const now = new Date();
     const start = call.answered_at ? new Date(call.answered_at) : new Date(call.created_at);
     const durationSec = Math.max(0, Math.floor((now.getTime() - start.getTime()) / 1000));
